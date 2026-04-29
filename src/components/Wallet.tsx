@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn } from 'lucide-react';
 
 interface Asset {
   symbol: string;
@@ -12,8 +13,43 @@ interface Asset {
 }
 
 export default function WalletComponent() {
+  const { data: session, status } = useSession();
   const [showBalance, setShowBalance] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+
+  if (status === 'loading') {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="p-6">
+        <div className="max-w-md mx-auto mt-16">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogIn size={32} className="text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">Please log in to access your wallet and manage your digital assets.</p>
+            <a
+              href="/login"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <LogIn size={20} className="mr-2" />
+              Sign In
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Mock wallet data
   const totalBalance = '12,547.82';

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useCryptoStore } from '@/store/cryptoStore';
 import { cryptoWebSocket } from '@/lib/websocket';
 import { fetchCryptoData } from '@/lib/cryptoApi';
-import { TrendingUp, TrendingDown, Wifi, WifiOff, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wifi, WifiOff, X, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import CryptoDetail from './CryptoDetail';
 
 export default function TradingView() {
   const {
@@ -20,6 +21,7 @@ export default function TradingView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCrypto, setSelectedCrypto] = useState<any>(null);
+  const [detailedCrypto, setDetailedCrypto] = useState<any>(null);
   const [tradeAmount, setTradeAmount] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
 
@@ -152,6 +154,16 @@ export default function TradingView() {
     setTradeAmount('');
   };
 
+  // Show detailed view if a crypto is selected for details
+  if (detailedCrypto) {
+    return (
+      <CryptoDetail
+        crypto={detailedCrypto}
+        onBack={() => setDetailedCrypto(null)}
+      />
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -201,7 +213,7 @@ export default function TradingView() {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="grid grid-cols-7 gap-4 p-4 bg-gray-50 font-semibold text-gray-700">
+        <div className="grid grid-cols-8 gap-4 p-4 bg-gray-50 font-semibold text-gray-700">
           <div>Symbol</div>
           <div className="text-right">Price (USDT)</div>
           <div className="text-right">24h Change</div>
@@ -209,6 +221,7 @@ export default function TradingView() {
           <div className="text-right">High</div>
           <div className="text-right">Low</div>
           <div className="text-right">Volume</div>
+          <div className="text-right">Actions</div>
         </div>
 
         <div className="divide-y divide-gray-200">
@@ -217,8 +230,7 @@ export default function TradingView() {
             return (
               <div
                 key={crypto.symbol}
-                className="grid grid-cols-7 gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => setSelectedCrypto(crypto)}
+                className="grid grid-cols-8 gap-4 p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="font-medium text-gray-900">{formatSymbol(crypto.symbol)}</div>
                 <div className="text-right font-mono font-semibold text-gray-900">
@@ -251,6 +263,21 @@ export default function TradingView() {
                 </div>
                 <div className="text-right text-gray-700 font-medium">
                   {parseFloat(crypto.volume).toFixed(0)}
+                </div>
+                <div className="text-right flex items-center justify-end space-x-2">
+                  <button
+                    onClick={() => setDetailedCrypto(crypto)}
+                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                    title="View detailed chart"
+                  >
+                    <BarChart3 size={16} />
+                  </button>
+                  <button
+                    onClick={() => setSelectedCrypto(crypto)}
+                    className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                  >
+                    Trade
+                  </button>
                 </div>
               </div>
             );
