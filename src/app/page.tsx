@@ -1,0 +1,36 @@
+'use client';
+
+import { useState } from 'react';
+import Navigation from '@/components/Navigation';
+import TradingView from '@/components/TradingView';
+import WalletComponent from '@/components/Wallet';
+import About from '@/components/About';
+import Blog from '@/components/Blog';
+
+export default function Home() {
+  const [activeTab, setActiveTab] = useState('home');
+
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <TradingView />;
+      case 'wallet':
+        return <WalletComponent />;
+      case 'about':
+        return <About />;
+      case 'blog':
+        return <Blog />;
+      default:
+        return <TradingView />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main className="max-w-7xl mx-auto">
+        {renderActiveComponent()}
+      </main>
+    </div>
+  );
+}
