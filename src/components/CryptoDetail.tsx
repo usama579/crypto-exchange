@@ -234,7 +234,7 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
                     tickFormatter={(value) => `$${formatPrice(value)}`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`$${formatPrice(value)}`, 'Price']}
+                    formatter={(value) => [`$${formatPrice(Number(value))}`, 'Price']}
                     labelStyle={{ color: '#374151' }}
                   />
                   <defs>
@@ -267,7 +267,7 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
                     tickFormatter={(value) => `$${formatPrice(value)}`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`$${formatPrice(value)}`, 'Price']}
+                    formatter={(value) => [`$${formatPrice(Number(value))}`, 'Price']}
                     labelStyle={{ color: '#374151' }}
                   />
                   <Line
@@ -311,7 +311,7 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
                   tickFormatter={(value) => formatVolume(value)}
                 />
                 <Tooltip
-                  formatter={(value: number) => [formatVolume(value), 'Volume']}
+                  formatter={(value) => [formatVolume(Number(value)), 'Volume']}
                   labelStyle={{ color: '#374151' }}
                 />
                 <Bar

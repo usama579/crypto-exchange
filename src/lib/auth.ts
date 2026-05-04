@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,25 +18,37 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = {
-          id: '1',
-          email: credentials.email,
-          name: 'Demo User',
-          firstName: 'Demo',
-          lastName: 'User'
-        };
+        try {
+          // Find user in database
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email.toLowerCase()
+            }
+          });
 
-        const isValidPassword = await bcrypt.compare(credentials.password, '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyNiK4LQV3ZQEK');
+          if (!user) {
+            return null;
+          }
 
-        if (user && (credentials.password === 'demo123' || isValidPassword)) {
+          // Verify password
+          const isValidPassword = await bcrypt.compare(credentials.password, user.password);
+
+          if (!isValidPassword) {
+            return null;
+          }
+
+          // Return user data for session
           return {
             id: user.id,
             email: user.email,
-            name: user.name,
+            name: `${user.firstName} ${user.lastName}`,
+            firstName: user.firstName,
+            lastName: user.lastName,
           };
+        } catch (error) {
+          console.error('Authentication error:', error);
+          return null;
         }
-
-        return null;
       }
     }),
     GoogleProvider({
@@ -49,7 +62,6 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: '/login',
-    signUp: '/signup',
   },
   session: {
     strategy: 'jwt',

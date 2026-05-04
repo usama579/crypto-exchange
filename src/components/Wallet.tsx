@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn } from 'lucide-react';
+import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
 
 interface Asset {
   symbol: string;
@@ -16,6 +16,13 @@ export default function WalletComponent() {
   const { data: session, status } = useSession();
   const [showBalance, setShowBalance] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [selectedAssetForDeposit, setSelectedAssetForDeposit] = useState<Asset | null>(null);
+  const [selectedAssetForWithdrawal, setSelectedAssetForWithdrawal] = useState<Asset | null>(null);
+  const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  const [withdrawalAddress, setWithdrawalAddress] = useState('');
+  const [twoFACode, setTwoFACode] = useState('');
 
   if (status === 'loading') {
     return (
@@ -92,46 +99,14 @@ export default function WalletComponent() {
         </div>
         <div className="flex space-x-3">
           <button
-            onClick={() => {
-              const notification = document.createElement('div');
-              notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-              notification.innerHTML = `
-                <div class="flex items-center">
-                  <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                  </svg>
-                  <div>Deposit initiated - Check your email for instructions</div>
-                </div>
-              `;
-              document.body.appendChild(notification);
-              setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
-              }, 4000);
-            }}
+            onClick={() => setShowDepositModal(true)}
             className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
           >
             <Plus size={16} className="mr-2" />
             Deposit
           </button>
           <button
-            onClick={() => {
-              const notification = document.createElement('div');
-              notification.className = 'fixed top-4 right-4 bg-orange-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-              notification.innerHTML = `
-                <div class="flex items-center">
-                  <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                  </svg>
-                  <div>Withdrawal requires 2FA verification</div>
-                </div>
-              `;
-              document.body.appendChild(notification);
-              setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
-              }, 4000);
-            }}
+            onClick={() => setShowWithdrawalModal(true)}
             className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
           >
             <Send size={16} className="mr-2" />
@@ -327,6 +302,366 @@ export default function WalletComponent() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Deposit Modal */}
+      {showDepositModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all">
+            {/* Header */}
+            <div className="relative px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                  <Download size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Deposit Cryptocurrency</h2>
+                  <p className="text-sm text-gray-500">Add funds to your wallet</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDepositModal(false)}
+                className="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-6">
+              {/* Crypto Selection */}
+              <div className="mb-8">
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Select Cryptocurrency
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 appearance-none cursor-pointer transition-all"
+                    onChange={(e) => {
+                      const asset = assets.find(a => a.symbol === e.target.value);
+                      setSelectedAssetForDeposit(asset || null);
+                    }}
+                  >
+                    <option value="" className="text-gray-500">Bitcoin (BTC)</option>
+                    {assets.map((asset) => (
+                      <option key={asset.symbol} value={asset.symbol} className="text-gray-900">
+                        {asset.name} ({asset.symbol})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Default BTC or Selected Asset */}
+              {(selectedAssetForDeposit || !selectedAssetForDeposit) && (
+                <div className="space-y-6">
+                  {/* Deposit Address Section */}
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                          <QrCode size={16} className="text-blue-600" />
+                        </div>
+                        <span className="font-semibold text-gray-900">Deposit Address</span>
+                      </div>
+                      <div className="flex items-center text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                        {selectedAssetForDeposit?.symbol || 'BTC'} Network
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="font-mono text-sm text-gray-800 break-all leading-relaxed">
+                        {selectedAssetForDeposit?.symbol === 'BTC' && '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+                        {selectedAssetForDeposit?.symbol === 'ETH' && '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'}
+                        {selectedAssetForDeposit?.symbol === 'BNB' && 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v'}
+                        {selectedAssetForDeposit?.symbol === 'USDT' && '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'}
+                        {!selectedAssetForDeposit && '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const addressToCopy = selectedAssetForDeposit?.symbol === 'BTC'
+                          ? '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
+                          : selectedAssetForDeposit?.symbol === 'BNB'
+                          ? 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v'
+                          : selectedAssetForDeposit?.symbol === 'ETH' || selectedAssetForDeposit?.symbol === 'USDT'
+                          ? '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'
+                          : '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+
+                        navigator.clipboard.writeText(addressToCopy);
+                        const notification = document.createElement('div');
+                        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center';
+                        notification.innerHTML = `
+                          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                          </svg>
+                          Address copied to clipboard
+                        `;
+                        document.body.appendChild(notification);
+                        setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 3000);
+                      }}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      <Copy size={16} className="mr-2" />
+                      Copy Address
+                    </button>
+                  </div>
+
+                  {/* Important Information */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                    <div className="flex items-start">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3 mt-0.5">
+                        <AlertCircle size={16} className="text-amber-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-amber-900 mb-2">Important Notes</h4>
+                        <ul className="space-y-2 text-sm text-amber-800">
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                            <span>Only send <strong>{selectedAssetForDeposit?.symbol || 'BTC'}</strong> to this address</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                            <span>Minimum deposit: <strong>0.001 {selectedAssetForDeposit?.symbol || 'BTC'}</strong></span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                            <span>Deposits require <strong>3 network confirmations</strong></span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 rounded-b-xl">
+              <button
+                onClick={() => {
+                  setShowDepositModal(false);
+                  setSelectedAssetForDeposit(null);
+                }}
+                className="w-full py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-white hover:border-gray-400 transition-all font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdrawal Modal */}
+      {showWithdrawalModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all max-h-[90vh] flex flex-col">
+            {/* Header - Fixed */}
+            <div className="relative px-6 py-5 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                  <Send size={20} className="text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Withdraw Cryptocurrency</h2>
+                  <p className="text-sm text-gray-500">Send funds from your wallet</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWithdrawalModal(false)}
+                className="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content - Scrollable */}
+            <div className="px-6 py-6 overflow-y-auto flex-1">
+              {/* Crypto Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Select Cryptocurrency
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900 appearance-none cursor-pointer transition-all"
+                    onChange={(e) => {
+                      const asset = assets.find(a => a.symbol === e.target.value);
+                      setSelectedAssetForWithdrawal(asset || null);
+                    }}
+                  >
+                    <option value="" className="text-gray-500">Choose cryptocurrency...</option>
+                    {assets.map((asset) => (
+                      <option key={asset.symbol} value={asset.symbol} className="text-gray-900">
+                        {asset.name} ({asset.symbol}) - Available: {asset.balance}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {selectedAssetForWithdrawal && (
+                <div className="space-y-4">
+                  {/* Available Balance */}
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center mr-3 text-xs font-semibold">
+                          {selectedAssetForWithdrawal.symbol.slice(0, 2)}
+                        </div>
+                        <span className="text-sm font-medium text-gray-600">Available Balance</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-gray-900">{selectedAssetForWithdrawal.balance} {selectedAssetForWithdrawal.symbol}</div>
+                        <div className="text-sm text-gray-500">${selectedAssetForWithdrawal.value}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Withdrawal Address */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Withdrawal Address
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-sm transition-all"
+                      placeholder={`Enter ${selectedAssetForWithdrawal.symbol} withdrawal address...`}
+                      value={withdrawalAddress}
+                      onChange={(e) => setWithdrawalAddress(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Amount
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        className="w-full px-4 py-3 pr-16 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                        placeholder="0.00000000"
+                        value={withdrawalAmount}
+                        onChange={(e) => setWithdrawalAmount(e.target.value)}
+                        step="0.00000001"
+                        min="0"
+                        max={selectedAssetForWithdrawal.balance}
+                      />
+                      <button
+                        onClick={() => setWithdrawalAmount(selectedAssetForWithdrawal.balance)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                      >
+                        MAX
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-gray-500">Network fee: 0.0005 {selectedAssetForWithdrawal.symbol}</span>
+                      <span className="text-gray-600">≈ ${(parseFloat(withdrawalAmount || '0') * parseFloat(selectedAssetForWithdrawal.value) / parseFloat(selectedAssetForWithdrawal.balance)).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {/* 2FA Code */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      2FA Authentication Code
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-center font-mono text-lg tracking-widest transition-all"
+                      placeholder="000000"
+                      value={twoFACode}
+                      onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      maxLength={6}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Enter the 6-digit code from your authenticator app</p>
+                  </div>
+
+                  {/* Security Warning */}
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-start">
+                      <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                        <AlertCircle size={14} className="text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-red-900 mb-1 text-sm">Security Warning</h4>
+                        <ul className="space-y-1 text-xs text-red-800">
+                          <li className="flex items-start">
+                            <div className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                            <span>Double-check the address. <strong>Transactions cannot be reversed.</strong></span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                            <span>Ensure you're sending to a <strong>{selectedAssetForWithdrawal.symbol}</strong> compatible address</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                            <span>Minimum: <strong>0.001 {selectedAssetForWithdrawal.symbol}</strong></span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer - Fixed */}
+            <div className="px-6 py-4 bg-gray-50 rounded-b-xl flex-shrink-0">
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowWithdrawalModal(false);
+                    setSelectedAssetForWithdrawal(null);
+                    setWithdrawalAmount('');
+                    setWithdrawalAddress('');
+                    setTwoFACode('');
+                  }}
+                  className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-white hover:border-gray-400 transition-all font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (withdrawalAmount && withdrawalAddress && twoFACode && selectedAssetForWithdrawal) {
+                      const notification = document.createElement('div');
+                      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+                      notification.innerHTML = `
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Withdrawal of ${withdrawalAmount} ${selectedAssetForWithdrawal.symbol} initiated successfully
+                      `;
+                      document.body.appendChild(notification);
+                      setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 5000);
+                      setShowWithdrawalModal(false);
+                      setSelectedAssetForWithdrawal(null);
+                      setWithdrawalAmount('');
+                      setWithdrawalAddress('');
+                      setTwoFACode('');
+                    }
+                  }}
+                  disabled={!withdrawalAmount || !withdrawalAddress || !twoFACode || !selectedAssetForWithdrawal}
+                  className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center"
+                >
+                  <Send size={16} className="mr-2" />
+                  Withdraw
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
