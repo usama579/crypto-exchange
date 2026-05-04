@@ -18,6 +18,10 @@ export interface LogContext {
   transactionId?: string;
   amount?: string;
   currency?: string;
+  error?: string;
+  field?: string;
+  action?: string;
+  component?: string;
 }
 
 export class Logger {

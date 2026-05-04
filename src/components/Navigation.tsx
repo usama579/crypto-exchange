@@ -27,7 +27,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
   const { data: session } = useSession();
 
   const menuItems = [
-    { id: 'home', label: 'Trading', icon: TrendingUp },
+    { id: 'home', label: 'Market', icon: Home },
     { id: 'wallet', label: 'Wallet', icon: Wallet },
     { id: 'referral', label: 'Referral', icon: Gift },
     { id: 'about', label: 'About', icon: Info },
@@ -44,6 +44,16 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
               <TrendingUp size={24} />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">CryptoExchange</h1>
+          </div>
+
+          {/* Trading Link */}
+          <div className="hidden md:block">
+            <Link href="/trading">
+              <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                <TrendingUp size={18} className="mr-2" />
+                Trading Center
+              </button>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -136,6 +146,18 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden pb-4">
+            {/* Trading Link for Mobile */}
+            <div className="mb-4">
+              <Link href="/trading">
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center w-full px-3 py-3 bg-blue-600 text-white rounded-lg font-medium"
+                >
+                  <TrendingUp size={18} className="mr-2" />
+                  Trading Center
+                </button>
+              </Link>
+            </div>
             <div className="space-y-1">
               {menuItems.map((item) => {
                 const IconComponent = item.icon;
