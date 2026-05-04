@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
+import WalletConnector from './WalletConnector';
 
 interface Asset {
   symbol: string;
@@ -18,6 +19,7 @@ export default function WalletComponent() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [selectedAssetForDeposit, setSelectedAssetForDeposit] = useState<Asset | null>(null);
   const [selectedAssetForWithdrawal, setSelectedAssetForWithdrawal] = useState<Asset | null>(null);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
@@ -201,8 +203,17 @@ export default function WalletComponent() {
                 <div className={`text-right font-medium ${parseFloat(asset.change) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                   {parseFloat(asset.change) >= 0 ? '+' : ''}{asset.change}%
                 </div>
-                <div className="text-right">
+                <div className="text-right space-x-2">
                   <button className="text-blue-600 hover:text-blue-800 text-sm">Trade</button>
+                  <button
+                    onClick={() => {
+                      setSelectedAssetForDeposit(asset);
+                      setShowQRModal(true);
+                    }}
+                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                  >
+                    Deposit
+                  </button>
                 </div>
               </div>
             ))}
@@ -412,6 +423,28 @@ export default function WalletComponent() {
                     >
                       <Copy size={16} className="mr-2" />
                       Copy Address
+                    </button>
+                  </div>
+
+                  {/* QR Code Section */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center mb-4">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                        <QrCode size={16} className="text-gray-600" />
+                      </div>
+                      <span className="font-semibold text-gray-900">QR Code Payment</span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedAssetForDeposit(selectedAssetForDeposit || { symbol: 'BTC', name: 'Bitcoin', balance: '0', value: '0', change: '0' });
+                        setShowQRModal(true);
+                        setShowDepositModal(false);
+                      }}
+                      className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium border border-gray-300"
+                    >
+                      <QrCode size={16} className="mr-2" />
+                      Generate QR Code
                     </button>
                   </div>
 
@@ -665,6 +698,16 @@ export default function WalletComponent() {
           </div>
         </div>
       )}
+
+      {/* QR Code Modal */}
+      <WalletConnector
+        isOpen={showQRModal}
+        onClose={() => {
+          setShowQRModal(false);
+          setSelectedAssetForDeposit(null);
+        }}
+        selectedAsset={selectedAssetForDeposit}
+      />
     </div>
   );
 }
