@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, Calendar, Volume2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, Calendar, Volume2, ShoppingCart, DollarSign, Wallet, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 
 interface CryptoDetailProps {
@@ -15,11 +16,27 @@ interface ChartData {
   volume: number;
 }
 
+interface UserWallet {
+  id: string;
+  symbol: string;
+  balance: string;
+  name: string;
+}
+
 export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
+  const { data: session } = useSession();
   const [timeRange, setTimeRange] = useState('24h');
   const [chartType, setChartType] = useState<'line' | 'area' | 'candlestick'>('area');
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Trading state
+  const [showTradeModal, setShowTradeModal] = useState(false);
+  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+  const [tradeAmount, setTradeAmount] = useState('');
+  const [userWallets, setUserWallets] = useState<UserWallet[]>([]);
+  const [isLoadingWallets, setIsLoadingWallets] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<UserWallet | null>(null);
 
   useEffect(() => {
     // Simulate loading chart data
@@ -61,6 +78,134 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
       setIsLoading(false);
     }, 500);
   }, [crypto, timeRange]);
+
+  // Fetch user wallets
+  useEffect(() => {
+    const fetchWallets = async () => {
+      if (!session?.user?.id) return;
+
+      setIsLoadingWallets(true);
+      try {
+        const response = await fetch('/api/wallet/balance');
+        if (response.ok) {
+          const data = await response.json();
+          const walletsData = data.wallets.map((wallet: any) => ({
+            id: wallet.id,
+            symbol: wallet.symbol,
+            balance: wallet.balance,
+            name: wallet.name || wallet.symbol
+          }));
+          setUserWallets(walletsData);
+
+          // Set default wallet based on trade type
+          const cryptoSymbol = crypto.symbol.replace('USDT', '').replace('BTC', '').replace('ETH', '');
+          if (tradeType === 'buy') {
+            const usdtWallet = walletsData.find((w: UserWallet) => w.symbol === 'USDT');
+            setSelectedWallet(usdtWallet || null);
+          } else {
+            const cryptoWallet = walletsData.find((w: UserWallet) => w.symbol === cryptoSymbol);
+            setSelectedWallet(cryptoWallet || null);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch wallets:', error);
+      } finally {
+        setIsLoadingWallets(false);
+      }
+    };
+
+    if (showTradeModal) {
+      fetchWallets();
+    }
+  }, [showTradeModal, session, crypto.symbol, tradeType]);
+
+  const handleTrade = async () => {
+    if (!selectedWallet || !tradeAmount || !session?.user?.id) return;
+
+    const amount = parseFloat(tradeAmount);
+    const cryptoPrice = parseFloat(crypto.price);
+
+    try {
+      let updatePayload;
+
+      if (tradeType === 'buy') {
+        // Buying crypto with USDT
+        const totalCost = amount * cryptoPrice;
+        const usdtBalance = parseFloat(selectedWallet.balance);
+
+        if (totalCost > usdtBalance) {
+          alert('Insufficient USDT balance');
+          return;
+        }
+
+        // Update USDT wallet (subtract)
+        updatePayload = {
+          walletId: selectedWallet.id,
+          amount: totalCost.toString(),
+          type: 'WITHDRAW'
+        };
+      } else {
+        // Selling crypto for USDT
+        const cryptoBalance = parseFloat(selectedWallet.balance);
+
+        if (amount > cryptoBalance) {
+          alert('Insufficient crypto balance');
+          return;
+        }
+
+        // Update crypto wallet (subtract)
+        updatePayload = {
+          walletId: selectedWallet.id,
+          amount: amount.toString(),
+          type: 'WITHDRAW'
+        };
+      }
+
+      const response = await fetch('/api/wallet/balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload)
+      });
+
+      if (response.ok) {
+        // Success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            <div>
+              <div class="font-medium">${tradeType.toUpperCase()} order completed!</div>
+              <div class="text-sm opacity-90">${amount} ${tradeType === 'buy' ? formatSymbol(crypto.symbol).split('/')[0] : 'USDT'}</div>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          notification.style.transform = 'translateX(100%)';
+          setTimeout(() => {
+            if (document.body.contains(notification)) {
+              document.body.removeChild(notification);
+            }
+          }, 300);
+        }, 3000);
+
+        setShowTradeModal(false);
+        setTradeAmount('');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Trade failed');
+      }
+    } catch (error) {
+      console.error('Trade error:', error);
+      alert('Trade failed. Please try again.');
+    }
+  };
 
   const formatSymbol = (symbol: string) => {
     if (symbol.endsWith('USDT')) {
@@ -119,7 +264,7 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
             <div className="text-3xl font-bold text-gray-900">
               ${formatPrice(parseFloat(crypto.price))}
             </div>
-            <div className={`flex items-center text-lg font-medium ${
+            <div className={`flex items-center text-lg font-medium mb-4 ${
               isPositive ? 'text-green-600' : 'text-red-600'
             }`}>
               {isPositive ? (
@@ -129,6 +274,35 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
               )}
               {isPositive ? '+' : ''}{parseFloat(crypto.changePercent).toFixed(2)}%
             </div>
+
+            {session ? (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setTradeType('buy');
+                    setShowTradeModal(true);
+                  }}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                >
+                  <ShoppingCart size={16} className="mr-1" />
+                  Buy
+                </button>
+                <button
+                  onClick={() => {
+                    setTradeType('sell');
+                    setShowTradeModal(true);
+                  }}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                >
+                  <DollarSign size={16} className="mr-1" />
+                  Sell
+                </button>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">
+                <a href="/login" className="text-blue-600 hover:text-blue-800">Login</a> to trade
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -324,6 +498,184 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
           )}
         </div>
       </div>
+
+      {/* Trading Modal */}
+      {showTradeModal && session && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl text-gray-900 font-bold">
+                {tradeType === 'buy' ? 'Buy' : 'Sell'} {formatSymbol(crypto.symbol)}
+              </h2>
+              <button
+                onClick={() => setShowTradeModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-2xl font-bold text-gray-900">
+                ${formatPrice(parseFloat(crypto.price))}
+              </div>
+              <div className={`text-sm ${parseFloat(crypto.changePercent) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {parseFloat(crypto.changePercent) >= 0 ? '+' : ''}{parseFloat(crypto.changePercent).toFixed(2)}% (24h)
+              </div>
+            </div>
+
+            {isLoadingWallets ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="text-gray-500 mt-2">Loading wallets...</div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Wallet Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    {tradeType === 'buy' ? 'Pay with' : 'Sell from'}
+                  </label>
+                  <select
+                    value={selectedWallet?.id || ''}
+                    onChange={(e) => {
+                      const wallet = userWallets.find(w => w.id === e.target.value);
+                      setSelectedWallet(wallet || null);
+                    }}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!selectedWallet ? 'text-gray-500' : 'text-gray-900'}`}
+                  >
+                    <option value="">Select wallet...</option>
+                    {userWallets
+                      .filter(wallet =>
+                        tradeType === 'buy'
+                          ? wallet.symbol === 'USDT'
+                          : wallet.symbol === crypto.symbol.replace('USDT', '').replace('BTC', '').replace('ETH', '')
+                      )
+                      .map((wallet) => (
+                        <option key={wallet.id} value={wallet.id}>
+                          {wallet.symbol} - Balance: {parseFloat(wallet.balance).toFixed(6)}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                {selectedWallet && (
+                  <>
+                    {/* Available Balance */}
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Available Balance</span>
+                        <div className="text-right">
+                          <div className="font-medium">{parseFloat(selectedWallet.balance).toFixed(6)} {selectedWallet.symbol}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Amount ({tradeType === 'buy' ? formatSymbol(crypto.symbol).split('/')[0] : 'Amount to sell'})
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="0.00000000"
+                          value={tradeAmount}
+                          onChange={(e) => setTradeAmount(e.target.value)}
+                          step="0.00000001"
+                          min="0"
+                        />
+                        {tradeType === 'sell' && (
+                          <button
+                            onClick={() => setTradeAmount(selectedWallet.balance)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-gray-600"
+                          >
+                            MAX
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Calculation Display */}
+                    {tradeAmount && (
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <div className="text-sm text-blue-800">
+                          {tradeType === 'buy' ? (
+                            <>
+                              <div>Cost: <strong>${(parseFloat(tradeAmount) * parseFloat(crypto.price)).toFixed(2)} USDT</strong></div>
+                              <div className="text-xs mt-1">
+                                You will receive: {tradeAmount} {formatSymbol(crypto.symbol).split('/')[0]}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div>You will receive: <strong>${(parseFloat(tradeAmount) * parseFloat(crypto.price)).toFixed(2)} USDT</strong></div>
+                              <div className="text-xs mt-1">
+                                Selling: {tradeAmount} {formatSymbol(crypto.symbol).split('/')[0]}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Balance Check Warning */}
+                    {tradeAmount && (
+                      <div>
+                        {tradeType === 'buy' && parseFloat(tradeAmount) * parseFloat(crypto.price) > parseFloat(selectedWallet.balance) && (
+                          <div className="flex items-start p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <AlertTriangle size={16} className="text-red-600 mr-2 mt-0.5" />
+                            <div className="text-sm text-red-800">
+                              Insufficient USDT balance. You need ${(parseFloat(tradeAmount) * parseFloat(crypto.price)).toFixed(2)} but only have ${parseFloat(selectedWallet.balance).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                        {tradeType === 'sell' && parseFloat(tradeAmount) > parseFloat(selectedWallet.balance) && (
+                          <div className="flex items-start p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <AlertTriangle size={16} className="text-red-600 mr-2 mt-0.5" />
+                            <div className="text-sm text-red-800">
+                              Insufficient balance. You are trying to sell {tradeAmount} but only have {parseFloat(selectedWallet.balance).toFixed(6)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-2">
+                  <button
+                    onClick={() => setShowTradeModal(false)}
+                    className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTrade}
+                    disabled={
+                      !selectedWallet ||
+                      !tradeAmount ||
+                      parseFloat(tradeAmount) <= 0 ||
+                      (tradeType === 'buy' && parseFloat(tradeAmount) * parseFloat(crypto.price) > parseFloat(selectedWallet.balance)) ||
+                      (tradeType === 'sell' && parseFloat(tradeAmount) > parseFloat(selectedWallet.balance))
+                    }
+                    className={`flex-1 py-2 px-4 rounded-lg text-white transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                      tradeType === 'buy'
+                        ? 'bg-green-600 hover:bg-green-700'
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                  >
+                    {tradeType === 'buy' ? 'Buy' : 'Sell'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

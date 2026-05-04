@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
+import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle, TrendingUp, Target, Users } from 'lucide-react';
 import WalletConnector from './WalletConnector';
 
 interface Asset {
+  id: string;
   symbol: string;
   name: string;
   balance: string;
-  value: string;
-  change: string;
+  value?: string;
+  change?: string;
 }
 
 export default function WalletComponent() {
@@ -25,6 +26,66 @@ export default function WalletComponent() {
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
+  const [showTradingModal, setShowTradingModal] = useState(false);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [totalBalance, setTotalBalance] = useState('0.00');
+  const [isLoadingAssets, setIsLoadingAssets] = useState(true);
+
+  // Fetch wallet data
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      if (!session?.user?.id) {
+        setIsLoadingAssets(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/wallet/balance');
+        if (response.ok) {
+          const data = await response.json();
+          const walletsData = data.wallets.map((wallet: any) => ({
+            id: wallet.id,
+            symbol: wallet.symbol,
+            name: wallet.name || wallet.symbol,
+            balance: parseFloat(wallet.balance).toFixed(6),
+            value: (parseFloat(wallet.balance) * getPrice(wallet.symbol)).toFixed(2),
+            change: '0.00' // This would come from price API in production
+          }));
+
+          setAssets(walletsData);
+
+          // Calculate total balance in USD
+          const total = walletsData.reduce((sum: number, asset: Asset) => {
+            return sum + parseFloat(asset.value || '0');
+          }, 0);
+
+          setTotalBalance(total.toFixed(2));
+        } else {
+          console.error('Failed to fetch wallet data');
+        }
+      } catch (error) {
+        console.error('Error fetching wallet data:', error);
+      } finally {
+        setIsLoadingAssets(false);
+      }
+    };
+
+    fetchWalletData();
+  }, [session]);
+
+  // Helper function to get crypto prices (mock data for now)
+  const getPrice = (symbol: string): number => {
+    const prices: { [key: string]: number } = {
+      'BTC': 45000,
+      'ETH': 3000,
+      'BNB': 300,
+      'USDT': 1,
+      'ADA': 0.5,
+      'SOL': 100,
+      'DOT': 25
+    };
+    return prices[symbol] || 1;
+  };
 
   if (status === 'loading') {
     return (
@@ -60,21 +121,6 @@ export default function WalletComponent() {
     );
   }
 
-  // Mock wallet data
-  const totalBalance = '12,547.82';
-  const assets: Asset[] = [
-    { symbol: 'BTC', name: 'Bitcoin', balance: '0.25847', value: '11,247.32', change: '+2.34' },
-    { symbol: 'ETH', name: 'Ethereum', balance: '2.15643', value: '847.91', change: '-1.12' },
-    { symbol: 'BNB', name: 'Binance Coin', balance: '5.847', value: '452.59', change: '+0.89' },
-    { symbol: 'USDT', name: 'Tether', balance: '1250.00', value: '1250.00', change: '0.00' },
-  ];
-
-  const recentTransactions = [
-    { type: 'deposit', asset: 'BTC', amount: '0.00521', time: '2 hours ago', status: 'completed' },
-    { type: 'trade', asset: 'ETH/USDT', amount: '1.25 ETH', time: '5 hours ago', status: 'completed' },
-    { type: 'withdrawal', asset: 'USDT', amount: '500.00', time: '1 day ago', status: 'pending' },
-  ];
-
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -97,7 +143,11 @@ export default function WalletComponent() {
           </button>
         </div>
         <div className="text-3xl font-bold mb-4">
-          {showBalance ? `$${totalBalance}` : '****'}
+          {isLoadingAssets ? (
+            <div className="h-9 bg-white/20 rounded animate-pulse w-32"></div>
+          ) : (
+            showBalance ? `$${totalBalance}` : '****'
+          )}
         </div>
         <div className="flex space-x-3">
           <button
@@ -115,23 +165,7 @@ export default function WalletComponent() {
             Withdraw
           </button>
           <button
-            onClick={() => {
-              const notification = document.createElement('div');
-              notification.className = 'fixed top-4 right-4 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-              notification.innerHTML = `
-                <div class="flex items-center">
-                  <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
-                  </svg>
-                  <div>Redirecting to trading interface...</div>
-                </div>
-              `;
-              document.body.appendChild(notification);
-              setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
-              }, 2000);
-            }}
+            onClick={() => setShowTradingModal(true)}
             className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowUpDown size={16} className="mr-2" />
@@ -187,36 +221,72 @@ export default function WalletComponent() {
             <div className="text-right">Actions</div>
           </div>
           <div className="divide-y divide-gray-200">
-            {assets.map((asset) => (
-              <div key={asset.symbol} className="grid grid-cols-5 gap-4 p-4 hover:bg-gray-50">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center">
-                    {asset.symbol.slice(0, 2)}
+            {isLoadingAssets ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="grid grid-cols-5 gap-4 p-4">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 animate-pulse"></div>
+                    <div>
+                      <div className="h-4 bg-gray-200 rounded w-16 mb-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{asset.symbol}</div>
-                    <div className="text-sm text-gray-500">{asset.name}</div>
+                  <div className="text-right"><div className="h-4 bg-gray-200 rounded w-20 ml-auto animate-pulse"></div></div>
+                  <div className="text-right"><div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse"></div></div>
+                  <div className="text-right"><div className="h-4 bg-gray-200 rounded w-12 ml-auto animate-pulse"></div></div>
+                  <div className="text-right"><div className="h-4 bg-gray-200 rounded w-16 ml-auto animate-pulse"></div></div>
+                </div>
+              ))
+            ) : assets.length > 0 ? (
+              assets.map((asset) => (
+                <div key={asset.id} className="grid grid-cols-5 gap-4 p-4 hover:bg-gray-50">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center text-xs font-semibold">
+                      {asset.symbol.slice(0, 2)}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">{asset.symbol}</div>
+                      <div className="text-sm text-gray-500">{asset.name}</div>
+                    </div>
+                  </div>
+                  <div className="text-right font-mono text-gray-900">{asset.balance}</div>
+                  <div className="text-right text-gray-900">${asset.value}</div>
+                  <div className={`text-right font-medium ${parseFloat(asset.change || '0') >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    {parseFloat(asset.change || '0') >= 0 ? '+' : ''}{asset.change}%
+                  </div>
+                  <div className="text-right space-x-2">
+                    <button
+                      onClick={() => window.location.href = '/trading'}
+                      className="text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      Trade
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedAssetForDeposit(asset);
+                        setShowQRModal(true);
+                      }}
+                      className="text-green-600 hover:text-green-800 text-sm font-medium"
+                    >
+                      Deposit
+                    </button>
                   </div>
                 </div>
-                <div className="text-right font-mono text-gray-900">{asset.balance}</div>
-                <div className="text-right text-gray-900">${asset.value}</div>
-                <div className={`text-right font-medium ${parseFloat(asset.change) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  {parseFloat(asset.change) >= 0 ? '+' : ''}{asset.change}%
-                </div>
-                <div className="text-right space-x-2">
-                  <button className="text-blue-600 hover:text-blue-800 text-sm">Trade</button>
-                  <button
-                    onClick={() => {
-                      setSelectedAssetForDeposit(asset);
-                      setShowQRModal(true);
-                    }}
-                    className="text-green-600 hover:text-green-800 text-sm font-medium"
-                  >
-                    Deposit
-                  </button>
-                </div>
+              ))
+            ) : (
+              <div className="p-8 text-center text-gray-500">
+                <Wallet size={48} className="mx-auto mb-4 text-gray-300" />
+                <div className="text-lg font-medium mb-2">No assets yet</div>
+                <div className="text-sm">Start by depositing some cryptocurrency to your wallet</div>
+                <button
+                  onClick={() => setShowDepositModal(true)}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Make your first deposit
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
@@ -228,25 +298,53 @@ export default function WalletComponent() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">Top Assets</h3>
             <div className="space-y-4">
-              {assets.slice(0, 3).map((asset) => (
-                <div key={asset.symbol} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center text-xs">
-                      {asset.symbol.slice(0, 2)}
+              {isLoadingAssets ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 animate-pulse"></div>
+                      <div>
+                        <div className="h-4 bg-gray-200 rounded w-12 mb-1 animate-pulse"></div>
+                        <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{asset.symbol}</div>
-                      <div className="text-sm text-gray-500">{asset.balance}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-gray-900">${asset.value}</div>
-                    <div className={`text-sm font-medium ${parseFloat(asset.change) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                      {parseFloat(asset.change) >= 0 ? '+' : ''}{asset.change}%
+                    <div className="text-right">
+                      <div className="h-4 bg-gray-200 rounded w-16 mb-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded w-12 animate-pulse"></div>
                     </div>
                   </div>
+                ))
+              ) : assets.length > 0 ? (
+                assets.slice(0, 3).map((asset) => (
+                  <div key={asset.id} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center text-xs font-semibold">
+                        {asset.symbol.slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{asset.symbol}</div>
+                        <div className="text-sm text-gray-500">{asset.balance}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-gray-900">${asset.value}</div>
+                      <div className={`text-sm font-medium ${parseFloat(asset.change || '0') >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                        {parseFloat(asset.change || '0') >= 0 ? '+' : ''}{asset.change}%
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="text-sm">No assets to display</div>
+                  <button
+                    onClick={() => setShowDepositModal(true)}
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Add your first asset
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -254,25 +352,10 @@ export default function WalletComponent() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">Recent Activity</h3>
             <div className="space-y-4">
-              {recentTransactions.map((tx, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full mr-3 flex items-center justify-center">
-                      {tx.type === 'deposit' && <Download size={16} className="text-blue-600" />}
-                      {tx.type === 'withdrawal' && <Send size={16} className="text-blue-600" />}
-                      {tx.type === 'trade' && <ArrowUpDown size={16} className="text-blue-600" />}
-                    </div>
-                    <div>
-                      <div className="font-medium capitalize text-gray-900">{tx.type}</div>
-                      <div className="text-sm text-gray-500">{tx.asset}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-gray-900">{tx.amount}</div>
-                    <div className="text-sm text-gray-500">{tx.time}</div>
-                  </div>
-                </div>
-              ))}
+              <div className="text-center text-gray-500 py-8">
+                <div className="text-sm">No recent transactions</div>
+                <div className="text-xs text-gray-400 mt-1">Your transaction history will appear here</div>
+              </div>
             </div>
           </div>
         </div>
@@ -284,35 +367,35 @@ export default function WalletComponent() {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Transaction History</h3>
-              <button className="text-blue-600 hover:text-blue-800 text-sm">Export</button>
+              <button
+                disabled
+                className="text-gray-400 text-sm cursor-not-allowed"
+                title="Export feature coming soon"
+              >
+                Export
+              </button>
             </div>
           </div>
-          <div className="divide-y divide-gray-200">
-            {recentTransactions.map((tx, index) => (
-              <div key={index} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full mr-4 flex items-center justify-center">
-                    {tx.type === 'deposit' && <Download size={20} className="text-blue-600" />}
-                    {tx.type === 'withdrawal' && <Send size={20} className="text-blue-600" />}
-                    {tx.type === 'trade' && <ArrowUpDown size={20} className="text-blue-600" />}
-                  </div>
-                  <div>
-                    <div className="font-medium capitalize text-gray-900">{tx.type} {tx.asset}</div>
-                    <div className="text-sm text-gray-500">{tx.time}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium text-gray-900">{tx.amount}</div>
-                  <div className={`text-sm px-2 py-1 rounded-full ${
-                    tx.status === 'completed'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {tx.status}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="p-8 text-center text-gray-500">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ArrowUpDown size={24} className="text-gray-400" />
+            </div>
+            <div className="text-lg font-medium mb-2">No transactions yet</div>
+            <div className="text-sm text-gray-400 mb-4">Your transaction history will appear here once you start trading</div>
+            <div className="flex space-x-3 justify-center">
+              <button
+                onClick={() => setShowDepositModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Make a Deposit
+              </button>
+              <button
+                onClick={() => setShowTradingModal(true)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Start Trading
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -437,7 +520,7 @@ export default function WalletComponent() {
 
                     <button
                       onClick={() => {
-                        setSelectedAssetForDeposit(selectedAssetForDeposit || { symbol: 'BTC', name: 'Bitcoin', balance: '0', value: '0', change: '0' });
+                        setSelectedAssetForDeposit(selectedAssetForDeposit || { id: 'btc-default', symbol: 'BTC', name: 'Bitcoin', balance: '0', value: '0', change: '0' });
                         setShowQRModal(true);
                         setShowDepositModal(false);
                       }}
@@ -603,7 +686,7 @@ export default function WalletComponent() {
                     </div>
                     <div className="flex justify-between text-sm mt-2">
                       <span className="text-gray-500">Network fee: 0.0005 {selectedAssetForWithdrawal.symbol}</span>
-                      <span className="text-gray-600">≈ ${(parseFloat(withdrawalAmount || '0') * parseFloat(selectedAssetForWithdrawal.value) / parseFloat(selectedAssetForWithdrawal.balance)).toFixed(2)}</span>
+                      <span className="text-gray-600">≈ ${(parseFloat(withdrawalAmount || '0') * parseFloat(selectedAssetForWithdrawal.value || '0') / parseFloat(selectedAssetForWithdrawal.balance)).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -708,6 +791,141 @@ export default function WalletComponent() {
         }}
         selectedAsset={selectedAssetForDeposit}
       />
+
+      {/* Trading Type Selection Modal */}
+      {showTradingModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all">
+            {/* Header */}
+            <div className="relative px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                  <ArrowUpDown size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Select Trading Type</h2>
+                  <p className="text-sm text-gray-500">Choose your preferred trading method</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTradingModal(false)}
+                className="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-6">
+              <div className="grid gap-4">
+                {/* Spot Trading */}
+                <button
+                  onClick={() => {
+                    setShowTradingModal(false);
+                    window.location.href = '/trading';
+                  }}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all group text-left"
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-green-200">
+                      <TrendingUp size={24} className="text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Spot Trading</h3>
+                      <p className="text-sm text-gray-600">Buy and sell cryptocurrencies instantly at current market prices</p>
+                      <div className="text-xs text-green-600 font-medium mt-2">✓ Real-time prices • ✓ Instant settlement</div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Future Trading */}
+                <button
+                  onClick={() => {
+                    const notification = document.createElement('div');
+                    notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
+                    notification.innerHTML = `
+                      <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                          <div class="font-medium">Future Trading Coming Soon!</div>
+                          <div class="text-sm opacity-90">This feature will be available in the next update</div>
+                        </div>
+                      </div>
+                    `;
+                    document.body.appendChild(notification);
+                    setTimeout(() => {
+                      notification.style.transform = 'translateX(100%)';
+                      setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
+                    }, 4000);
+                    setShowTradingModal(false);
+                  }}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group text-left"
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-200">
+                      <Target size={24} className="text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Future Trading</h3>
+                      <p className="text-sm text-gray-600">Trade cryptocurrency contracts with leverage for potential higher returns</p>
+                      <div className="text-xs text-blue-600 font-medium mt-2">⚠️ Coming Soon • ✓ Leverage up to 100x</div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Copy Trading */}
+                <button
+                  onClick={() => {
+                    const notification = document.createElement('div');
+                    notification.className = 'fixed top-4 right-4 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
+                    notification.innerHTML = `
+                      <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                          <div class="font-medium">Copy Trading Coming Soon!</div>
+                          <div class="text-sm opacity-90">Follow successful traders and mirror their strategies</div>
+                        </div>
+                      </div>
+                    `;
+                    document.body.appendChild(notification);
+                    setTimeout(() => {
+                      notification.style.transform = 'translateX(100%)';
+                      setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
+                    }, 4000);
+                    setShowTradingModal(false);
+                  }}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group text-left"
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-purple-200">
+                      <Users size={24} className="text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Copy Trading</h3>
+                      <p className="text-sm text-gray-600">Automatically copy trades from successful and experienced traders</p>
+                      <div className="text-xs text-purple-600 font-medium mt-2">⚠️ Coming Soon • ✓ Professional traders</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 rounded-b-xl">
+              <button
+                onClick={() => setShowTradingModal(false)}
+                className="w-full py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-white hover:border-gray-400 transition-all font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

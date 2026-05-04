@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { ReferralService } from '@/lib/referral';
 
 export async function POST(request: NextRequest) {
   try {
-    const { firstName, lastName, email, password } = await request.json();
+    const { firstName, lastName, email, password, referralCode } = await request.json();
 
     if (!firstName || !lastName || !email || !password) {
       return NextResponse.json(
@@ -60,7 +61,24 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('User created successfully:', { email: user.email, name: `${firstName} ${lastName}` });
+    // Process referral and bonuses
+    const referralResult = await ReferralService.processNewUserReferral(
+      user.id,
+      referralCode
+    );
+
+    // Generate referral code for new user
+    const userReferralCode = await ReferralService.createOrGetReferralCode(
+      user.id,
+      normalizedEmail
+    );
+
+    console.log('User created successfully:', {
+      email: user.email,
+      name: `${firstName} ${lastName}`,
+      referralCode: userReferralCode,
+      referralProcessed: referralResult.success
+    });
 
     return NextResponse.json(
       {
@@ -70,6 +88,12 @@ export async function POST(request: NextRequest) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          referralCode: userReferralCode,
+        },
+        referral: {
+          processed: referralResult.success,
+          message: referralResult.message,
+          bonus: 100
         }
       },
       { status: 201 }

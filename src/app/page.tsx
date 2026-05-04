@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import TradingView from '@/components/TradingView';
 import WalletComponent from '@/components/Wallet';
+import ReferralDashboard from '@/components/ReferralDashboard';
 import About from '@/components/About';
 import Blog from '@/components/Blog';
 
@@ -16,6 +17,8 @@ export default function Home() {
         return <TradingView />;
       case 'wallet':
         return <WalletComponent />;
+      case 'referral':
+        return <ReferralDashboard />;
       case 'about':
         return <About />;
       case 'blog':

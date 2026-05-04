@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ReferralService } from '@/lib/referral';
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     const status = confirmations >= 3 ? 'COMPLETED' : 'CONFIRMING';
 
-    await prisma.$transaction([
+    const [transaction] = await prisma.$transaction([
       // Create transaction record
       prisma.transaction.create({
         data: {
@@ -93,6 +94,22 @@ export async function POST(request: NextRequest) {
         })
       ] : [])
     ]);
+
+    // Process referral system if deposit is completed
+    if (status === 'COMPLETED') {
+      try {
+        await ReferralService.processDeposit(
+          wallet.userId,
+          transaction.id,
+          amount.toString(),
+          symbol.toUpperCase()
+        );
+        console.log(`Referral processing completed for deposit: ${txHash}`);
+      } catch (referralError) {
+        console.error('Error processing referral for deposit:', referralError);
+        // Don't fail the entire deposit for referral errors
+      }
+    }
 
     console.log(`Deposit processed: ${amount} ${symbol} to ${wallet.user.email}`);
 

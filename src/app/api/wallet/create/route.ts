@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Generate a mock deposit address (in production, use proper address generation)
     const generateMockAddress = (symbol: string) => {
-      const addresses = {
+      const addresses: { [key: string]: string } = {
         'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
         'ETH': '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8',
         'BNB': 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v',

@@ -11,17 +11,23 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String
+  lastName     String
+  password     String
+  referralCode String?  @unique
+  referredBy   String?  // ID of user who referred this user
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   wallets      Wallet[]
   transactions Transaction[]
+  referrals    Referral[] @relation("ReferrerToReferrals")
+  referredByUser User? @relation("UserReferrals", fields: [referredBy], references: [id])
+  referredUsers User[] @relation("UserReferrals")
+  lockedBalances LockedBalance[]
 
   @@map("users")
 }
@@ -66,4 +72,54 @@ model Transaction {
 
   @@unique([txHash, symbol])
   @@map("transactions")
+}
+
+model Referral {
+  id              String   @id @default(cuid())
+  referrerId      String   // User who made the referral
+  referredUserId  String   // User who was referred
+  status          String   @default("PENDING") // PENDING, ACTIVE, COMPLETED
+  rewardAmount    String   @default("100") // USDT reward amount
+  isUnlocked      Boolean  @default(false)
+  requiredReferrals Int    @default(2) // Number of referrals needed to unlock
+  completedReferrals Int   @default(0) // Current count of completed referrals
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  referrer     User @relation("ReferrerToReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerId, referredUserId])
+  @@map("referrals")
+}
+
+model LockedBalance {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    String   // Amount locked (as string for precision)
+  currency  String   @default("USDT")
+  reason    String   // REFERRAL_BONUS, SIGNUP_BONUS, etc.
+  isLocked  Boolean  @default(true)
+  unlockedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("locked_balances")
+}
+
+model ReferralDeposit {
+  id            String   @id @default(cuid())
+  userId        String   // User who made deposit
+  referralId    String?  // Associated referral if applicable
+  transactionId String   // Link to transaction
+  amount        String   // Deposit amount
+  currency      String
+  isProcessed   Boolean  @default(false) // Whether this deposit was processed for referral unlock
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("referral_deposits")
 }

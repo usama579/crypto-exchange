@@ -20,10 +20,7 @@ export default function TradingView() {
   } = useCryptoStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCrypto, setSelectedCrypto] = useState<any>(null);
   const [detailedCrypto, setDetailedCrypto] = useState<any>(null);
-  const [tradeAmount, setTradeAmount] = useState('');
-  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
 
   useEffect(() => {
     // First, load data from REST API for immediate display
@@ -122,37 +119,6 @@ export default function TradingView() {
     return symbol;
   };
 
-  const handleTrade = () => {
-    if (!selectedCrypto || !tradeAmount) return;
-
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-    notification.innerHTML = `
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-        </svg>
-        <div>
-          <div class="font-medium">${tradeType.toUpperCase()} order placed successfully!</div>
-          <div class="text-sm opacity-90">${tradeAmount} USDT for ${formatSymbol(selectedCrypto.symbol)}</div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      notification.style.transform = 'translateX(100%)';
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 300);
-    }, 3000);
-
-    setSelectedCrypto(null);
-    setTradeAmount('');
-  };
 
   // Show detailed view if a crypto is selected for details
   if (detailedCrypto) {
@@ -267,16 +233,10 @@ export default function TradingView() {
                 <div className="text-right flex items-center justify-end space-x-2">
                   <button
                     onClick={() => setDetailedCrypto(crypto)}
-                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-                    title="View detailed chart"
+                    className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded hover:bg-blue-50 transition-colors flex items-center"
                   >
-                    <BarChart3 size={16} />
-                  </button>
-                  <button
-                    onClick={() => setSelectedCrypto(crypto)}
-                    className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50 transition-colors"
-                  >
-                    Trade
+                    <BarChart3 size={14} className="mr-1" />
+                    Details
                   </button>
                 </div>
               </div>
@@ -365,99 +325,6 @@ export default function TradingView() {
         </div>
       )}
 
-      {/* Trading Modal */}
-      {selectedCrypto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Trade {formatSymbol(selectedCrypto.symbol)}</h2>
-              <button
-                onClick={() => setSelectedCrypto(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-2xl font-bold text-gray-900">
-                ${formatPrice(selectedCrypto.price)}
-              </div>
-              <div className={`text-sm ${parseFloat(selectedCrypto.changePercent) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {parseFloat(selectedCrypto.changePercent) >= 0 ? '+' : ''}{formatPercent(selectedCrypto.changePercent)}% (24h)
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex rounded-lg bg-gray-100 p-1 mb-3">
-                <button
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    tradeType === 'buy'
-                      ? 'bg-green-600 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setTradeType('buy')}
-                >
-                  Buy
-                </button>
-                <button
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    tradeType === 'sell'
-                      ? 'bg-red-600 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setTradeType('sell')}
-                >
-                  Sell
-                </button>
-              </div>
-
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount (USDT)
-                </label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter amount..."
-                  value={tradeAmount}
-                  onChange={(e) => setTradeAmount(e.target.value)}
-                />
-              </div>
-
-              {tradeAmount && (
-                <div className="text-sm text-gray-600 mb-4">
-                  You will {tradeType} approximately{' '}
-                  <span className="font-medium">
-                    {(parseFloat(tradeAmount) / parseFloat(selectedCrypto.price)).toFixed(6)}
-                  </span>{' '}
-                  {formatSymbol(selectedCrypto.symbol).split('/')[0]}
-                </div>
-              )}
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setSelectedCrypto(null)}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTrade}
-                className={`flex-1 py-2 px-4 rounded-lg text-white transition-colors ${
-                  tradeType === 'buy'
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
-                disabled={!tradeAmount}
-              >
-                {tradeType === 'buy' ? 'Buy' : 'Sell'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

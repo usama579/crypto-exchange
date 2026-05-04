@@ -223,26 +223,36 @@ export class BlockchainMonitor {
         if (tx.confirmations > existingTx.confirmations) {
           const shouldUpdateBalance = !existingTx.status.includes('COMPLETED') && isConfirmed;
 
-          await prisma.$transaction([
-            prisma.transaction.update({
+          if (shouldUpdateBalance) {
+            // Get current balance first
+            const currentWallet = await prisma.wallet.findUnique({ where: { id: walletId } });
+            const currentBalance = parseFloat(currentWallet?.balance || '0');
+            const newBalance = currentBalance + parseFloat(tx.value);
+
+            await prisma.$transaction([
+              prisma.transaction.update({
+                where: { id: existingTx.id },
+                data: {
+                  confirmations: tx.confirmations,
+                  status: isConfirmed ? 'COMPLETED' : 'CONFIRMING'
+                }
+              }),
+              prisma.wallet.update({
+                where: { id: walletId },
+                data: {
+                  balance: newBalance.toString()
+                }
+              })
+            ]);
+          } else {
+            await prisma.transaction.update({
               where: { id: existingTx.id },
               data: {
                 confirmations: tx.confirmations,
                 status: isConfirmed ? 'COMPLETED' : 'CONFIRMING'
               }
-            }),
-            // Update wallet balance only when confirmed for the first time
-            ...(shouldUpdateBalance ? [
-              prisma.wallet.update({
-                where: { id: walletId },
-                data: {
-                  balance: {
-                    increment: parseFloat(tx.value)
-                  }
-                }
-              })
-            ] : [])
-          ]);
+            });
+          }
 
           if (shouldUpdateBalance) {
             console.log(`✅ Deposit confirmed: ${tx.value} ${tx.symbol} | TxHash: ${tx.hash}`);
@@ -254,8 +264,36 @@ export class BlockchainMonitor {
       // Create new transaction
       const status = isConfirmed ? 'COMPLETED' : 'CONFIRMING';
 
-      await prisma.$transaction([
-        prisma.transaction.create({
+      if (isConfirmed) {
+        // Get current balance first
+        const currentWallet = await prisma.wallet.findUnique({ where: { id: walletId } });
+        const currentBalance = parseFloat(currentWallet?.balance || '0');
+        const newBalance = currentBalance + parseFloat(tx.value);
+
+        await prisma.$transaction([
+          prisma.transaction.create({
+            data: {
+              userId,
+              walletId,
+              txHash: tx.hash,
+              type: 'DEPOSIT',
+              status,
+              amount: tx.value,
+              symbol: tx.symbol,
+              fromAddress: tx.from,
+              toAddress: tx.to,
+              confirmations: tx.confirmations
+            }
+          }),
+          prisma.wallet.update({
+            where: { id: walletId },
+            data: {
+              balance: newBalance.toString()
+            }
+          })
+        ]);
+      } else {
+        await prisma.transaction.create({
           data: {
             userId,
             walletId,
@@ -268,19 +306,8 @@ export class BlockchainMonitor {
             toAddress: tx.to,
             confirmations: tx.confirmations
           }
-        }),
-        // Update wallet balance only if confirmed
-        ...(isConfirmed ? [
-          prisma.wallet.update({
-            where: { id: walletId },
-            data: {
-              balance: {
-                increment: parseFloat(tx.value)
-              }
-            }
-          })
-        ] : [])
-      ]);
+        });
+      }
 
       console.log(`🔄 New ${status.toLowerCase()} deposit: ${tx.value} ${tx.symbol} | TxHash: ${tx.hash}`);
 

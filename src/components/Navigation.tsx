@@ -12,7 +12,8 @@ import {
   Info,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Gift
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -28,6 +29,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
   const menuItems = [
     { id: 'home', label: 'Trading', icon: TrendingUp },
     { id: 'wallet', label: 'Wallet', icon: Wallet },
+    { id: 'referral', label: 'Referral', icon: Gift },
     { id: 'about', label: 'About', icon: Info },
     { id: 'blog', label: 'Blog', icon: FileText },
   ];

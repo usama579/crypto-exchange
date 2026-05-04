@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, Mail, User, TrendingUp } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Eye, EyeOff, Lock, Mail, User, TrendingUp, Gift } from 'lucide-react';
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -12,13 +12,48 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    referralCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [referralValid, setReferralValid] = useState<boolean | null>(null);
+  const [validatingReferral, setValidatingReferral] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setFormData(prev => ({ ...prev, referralCode: refCode }));
+      validateReferralCode(refCode);
+    }
+  }, [searchParams]);
+
+  const validateReferralCode = async (code: string) => {
+    if (!code.trim()) {
+      setReferralValid(null);
+      return;
+    }
+
+    setValidatingReferral(true);
+    try {
+      const response = await fetch('/api/referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'validate', referralCode: code })
+      });
+
+      const result = await response.json();
+      setReferralValid(result.success);
+    } catch (error) {
+      setReferralValid(false);
+    } finally {
+      setValidatingReferral(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -26,6 +61,10 @@ export default function SignupPage() {
       ...prev,
       [name]: value
     }));
+
+    if (name === 'referralCode') {
+      validateReferralCode(value);
+    }
   };
 
   const validateForm = () => {
@@ -85,6 +124,7 @@ export default function SignupPage() {
           lastName: formData.lastName,
           email: formData.email,
           password: formData.password,
+          referralCode: formData.referralCode || undefined,
         }),
       });
 
@@ -114,7 +154,7 @@ export default function SignupPage() {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-800">
           Or{' '}
           <Link
             href="/login"
@@ -203,6 +243,50 @@ export default function SignupPage() {
             </div>
 
             <div>
+              <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700">
+                Referral Code (Optional)
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Gift className="h-5 w-5 text-gray-600" />
+                </div>
+                <input
+                  id="referralCode"
+                  name="referralCode"
+                  type="text"
+                  value={formData.referralCode}
+                  onChange={handleChange}
+                  className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                    referralValid === false ? 'border-red-300' :
+                    referralValid === true ? 'border-green-300' :
+                    'border-gray-300'
+                  }`}
+                  placeholder="Enter referral code to get $100 bonus"
+                />
+                {validatingReferral && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
+              {referralValid === true && (
+                <p className="mt-1 text-xs text-green-700">
+                  ✓ Valid referral code! You and your referrer will both get $100 USDT bonus
+                </p>
+              )}
+              {referralValid === false && (
+                <p className="mt-1 text-xs text-red-700">
+                  Invalid referral code
+                </p>
+              )}
+              {!formData.referralCode && (
+                <p className="mt-1 text-xs text-gray-700">
+                  Have a referral code? Enter it to get $100 USDT bonus!
+                </p>
+              )}
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
@@ -233,7 +317,7 @@ export default function SignupPage() {
                   )}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-700">
                 Must be at least 8 characters with uppercase, lowercase, and number
               </p>
             </div>
@@ -282,11 +366,11 @@ export default function SignupPage() {
               />
               <label htmlFor="accept-terms" className="ml-2 block text-sm text-gray-900">
                 I agree to the{' '}
-                <Link href="/terms" className="text-blue-600 hover:text-blue-500">
+                <Link href="/terms" className="text-blue-600 hover:text-blue-500 font-medium">
                   Terms and Conditions
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
+                <Link href="/privacy" className="text-blue-600 hover:text-blue-500 font-medium">
                   Privacy Policy
                 </Link>
               </label>
@@ -309,12 +393,12 @@ export default function SignupPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-700">Or continue with</span>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+              <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 <span className="sr-only">Sign up with Google</span>
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -336,7 +420,7 @@ export default function SignupPage() {
                 </svg>
               </button>
 
-              <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+              <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 <span className="sr-only">Sign up with GitHub</span>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path
