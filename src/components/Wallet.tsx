@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle, TrendingUp, Target, Users } from 'lucide-react';
+import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
 import WalletConnector from './WalletConnector';
 
 interface Asset {
@@ -26,7 +26,6 @@ export default function WalletComponent() {
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
-  const [showTradingModal, setShowTradingModal] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [totalBalance, setTotalBalance] = useState('0.00');
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
@@ -165,7 +164,7 @@ export default function WalletComponent() {
             Withdraw
           </button>
           <button
-            onClick={() => setShowTradingModal(true)}
+            onClick={() => window.location.href = '/trading'}
             className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowUpDown size={16} className="mr-2" />
@@ -390,7 +389,7 @@ export default function WalletComponent() {
                 Make a Deposit
               </button>
               <button
-                onClick={() => setShowTradingModal(true)}
+                onClick={() => window.location.href = '/trading'}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               >
                 Start Trading
@@ -792,140 +791,6 @@ export default function WalletComponent() {
         selectedAsset={selectedAssetForDeposit}
       />
 
-      {/* Trading Type Selection Modal */}
-      {showTradingModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all">
-            {/* Header */}
-            <div className="relative px-6 py-5 border-b border-gray-100">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                  <ArrowUpDown size={20} className="text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Select Trading Type</h2>
-                  <p className="text-sm text-gray-500">Choose your preferred trading method</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowTradingModal(false)}
-                className="absolute right-5 top-5 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="px-6 py-6">
-              <div className="grid gap-4">
-                {/* Spot Trading */}
-                <button
-                  onClick={() => {
-                    setShowTradingModal(false);
-                    window.location.href = '/trading';
-                  }}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all group text-left"
-                >
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-green-200">
-                      <TrendingUp size={24} className="text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Spot Trading</h3>
-                      <p className="text-sm text-gray-600">Buy and sell cryptocurrencies instantly at current market prices</p>
-                      <div className="text-xs text-green-600 font-medium mt-2">✓ Real-time prices • ✓ Instant settlement</div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Future Trading */}
-                <button
-                  onClick={() => {
-                    const notification = document.createElement('div');
-                    notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-                    notification.innerHTML = `
-                      <div class="flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                        </svg>
-                        <div>
-                          <div class="font-medium">Future Trading Coming Soon!</div>
-                          <div class="text-sm opacity-90">This feature will be available in the next update</div>
-                        </div>
-                      </div>
-                    `;
-                    document.body.appendChild(notification);
-                    setTimeout(() => {
-                      notification.style.transform = 'translateX(100%)';
-                      setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
-                    }, 4000);
-                    setShowTradingModal(false);
-                  }}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group text-left"
-                >
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-200">
-                      <Target size={24} className="text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Future Trading</h3>
-                      <p className="text-sm text-gray-600">Trade cryptocurrency contracts with leverage for potential higher returns</p>
-                      <div className="text-xs text-blue-600 font-medium mt-2">⚠️ Coming Soon • ✓ Leverage up to 100x</div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Copy Trading */}
-                <button
-                  onClick={() => {
-                    const notification = document.createElement('div');
-                    notification.className = 'fixed top-4 right-4 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-                    notification.innerHTML = `
-                      <div class="flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                        </svg>
-                        <div>
-                          <div class="font-medium">Copy Trading Coming Soon!</div>
-                          <div class="text-sm opacity-90">Follow successful traders and mirror their strategies</div>
-                        </div>
-                      </div>
-                    `;
-                    document.body.appendChild(notification);
-                    setTimeout(() => {
-                      notification.style.transform = 'translateX(100%)';
-                      setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 300);
-                    }, 4000);
-                    setShowTradingModal(false);
-                  }}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group text-left"
-                >
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-purple-200">
-                      <Users size={24} className="text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Copy Trading</h3>
-                      <p className="text-sm text-gray-600">Automatically copy trades from successful and experienced traders</p>
-                      <div className="text-xs text-purple-600 font-medium mt-2">⚠️ Coming Soon • ✓ Professional traders</div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 rounded-b-xl">
-              <button
-                onClick={() => setShowTradingModal(false)}
-                className="w-full py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-white hover:border-gray-400 transition-all font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
