@@ -401,8 +401,8 @@ export default function WalletComponent() {
 
       {/* Deposit Modal */}
       {showDepositModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all">
+        <div className="fixed inset-0 bg-gray-500/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="relative px-6 py-5 border-b border-gray-100">
               <div className="flex items-center">
@@ -577,7 +577,7 @@ export default function WalletComponent() {
 
       {/* Withdrawal Modal */}
       {showWithdrawalModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-500/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all max-h-[90vh] flex flex-col">
             {/* Header - Fixed */}
             <div className="relative px-6 py-5 border-b border-gray-100 flex-shrink-0">

@@ -187,6 +187,16 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
                     {session.user?.name || session.user?.email}
                   </div>
                   <button
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    <User size={16} className="mr-2" />
+                    Profile
+                  </button>
+                  <button
                     onClick={() => signOut()}
                     className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
                   >

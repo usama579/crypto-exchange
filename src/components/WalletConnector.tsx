@@ -52,7 +52,7 @@ export default function WalletConnector({ isOpen, onClose, selectedAsset }: Wall
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-500/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-auto transform transition-all max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="relative px-6 py-5 border-b border-gray-100">

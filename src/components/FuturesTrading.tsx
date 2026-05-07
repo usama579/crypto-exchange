@@ -67,60 +67,84 @@ export default function FuturesTrading() {
   const handleTrade = async () => {
     if (!selectedCrypto || !margin || !session?.user?.id) return;
 
-    const marginAmount = parseFloat(margin);
-    const size = (marginAmount * leverage) / parseFloat(selectedCrypto.price);
-    const liquidationPrice = tradeType === 'long'
-      ? parseFloat(selectedCrypto.price) * (1 - (1 / leverage) * 0.9)
-      : parseFloat(selectedCrypto.price) * (1 + (1 / leverage) * 0.9);
+    try {
+      const response = await fetch('/api/trading/futures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: selectedCrypto.symbol,
+          side: tradeType.toUpperCase(),
+          margin: margin,
+          leverage: leverage
+        })
+      });
 
-    const newPosition: FuturesPosition = {
-      id: Date.now().toString(),
-      symbol: selectedCrypto.symbol,
-      side: tradeType,
-      size: size,
-      entryPrice: parseFloat(selectedCrypto.price),
-      leverage: leverage,
-      margin: marginAmount,
-      liquidationPrice: liquidationPrice
-    };
+      const data = await response.json();
 
-    setPositions(prev => [...prev, newPosition]);
-    setShowTradeModal(false);
-    setMargin('');
-    setSelectedCrypto(null);
-
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.innerHTML = `
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-        </svg>
-        <div>
-          <div class="font-medium">${tradeType.toUpperCase()} position opened!</div>
-          <div class="text-sm opacity-90">${size.toFixed(6)} ${selectedCrypto.symbol.replace('USDT', '')}</div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
+      if (!data.success) {
+        throw new Error(data.error || 'Trade failed');
       }
-    }, 3000);
+
+      // Add to local state for immediate UI update
+      const newPosition: FuturesPosition = {
+        id: data.position.id,
+        symbol: data.position.symbol,
+        side: data.position.side.toLowerCase() as 'long' | 'short',
+        size: parseFloat(data.position.amount),
+        entryPrice: parseFloat(data.position.entryPrice),
+        leverage: data.position.leverage,
+        margin: parseFloat(data.position.margin),
+        liquidationPrice: parseFloat(data.position.liquidationPrice)
+      };
+
+      setPositions(prev => [...prev, newPosition]);
+      setShowTradeModal(false);
+      setMargin('');
+      setSelectedCrypto(null);
+
+      showNotification(`${tradeType.toUpperCase()} position opened!`, 'success');
+
+    } catch (error) {
+      console.error('Trade error:', error);
+      showNotification(error instanceof Error ? error.message : 'Trade failed', 'error');
+    }
   };
 
-  const closePosition = (positionId: string) => {
-    setPositions(prev => prev.filter(p => p.id !== positionId));
+  const closePosition = async (positionId: string) => {
+    try {
+      const response = await fetch('/api/trading/close', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ positionId, type: 'futures' })
+      });
 
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to close position');
+      }
+
+      setPositions(prev => prev.filter(p => p.id !== positionId));
+      showNotification(`Position closed. PnL: ${data.pnl ? '$' + data.pnl.toFixed(2) : 'N/A'}`, 'success');
+
+    } catch (error) {
+      console.error('Close position error:', error);
+      showNotification(error instanceof Error ? error.message : 'Failed to close position', 'error');
+    }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.className = `fixed top-4 right-4 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
     notification.innerHTML = `
       <div class="flex items-center">
         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          ${type === 'success'
+            ? '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>'
+            : '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>'
+          }
         </svg>
-        Position closed successfully!
+        ${message}
       </div>
     `;
     document.body.appendChild(notification);
@@ -377,8 +401,8 @@ export default function FuturesTrading() {
 
       {/* Trade Modal */}
       {showTradeModal && selectedCrypto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">
                 {tradeType.toUpperCase()} {formatSymbol(selectedCrypto.symbol)}

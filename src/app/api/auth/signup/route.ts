@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { ReferralService } from '@/lib/referral';
+import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +52,10 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Generate email verification token
+    const verificationToken = crypto.randomUUID();
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create user in database
     const user = await prisma.user.create({
       data: {
@@ -58,6 +63,8 @@ export async function POST(request: NextRequest) {
         lastName,
         email: normalizedEmail,
         password: hashedPassword,
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpires: verificationExpires,
       }
     });
 
@@ -73,27 +80,44 @@ export async function POST(request: NextRequest) {
       normalizedEmail
     );
 
+    // Send verification email
+    const emailSent = await sendVerificationEmail(user.email, verificationToken);
+
+    if (!emailSent) {
+      // If email fails, still log the verification URL for development
+      console.log(`Failed to send email to ${user.email}, verification token: ${verificationToken}`);
+      console.log(`Verification URL: ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${verificationToken}`);
+    } else {
+      console.log(`Verification email sent successfully to ${user.email}`);
+    }
+
     console.log('User created successfully:', {
       email: user.email,
       name: `${firstName} ${lastName}`,
       referralCode: userReferralCode,
-      referralProcessed: referralResult.success
+      referralProcessed: referralResult.success,
+      emailVerified: false
     });
 
     return NextResponse.json(
       {
-        message: 'Account created successfully',
+        message: 'Account created successfully. Please check your email to verify your account.',
         user: {
           id: user.id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           referralCode: userReferralCode,
+          isEmailVerified: false,
         },
         referral: {
           processed: referralResult.success,
           message: referralResult.message,
           bonus: 100
+        },
+        verification: {
+          required: true,
+          message: 'Please check your email for verification link'
         }
       },
       { status: 201 }

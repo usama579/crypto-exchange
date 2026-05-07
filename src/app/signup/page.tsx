@@ -134,7 +134,8 @@ function SignupForm() {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      router.push('/login?message=Account created successfully');
+      // Redirect to email verification notice instead of login
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {

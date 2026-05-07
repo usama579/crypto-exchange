@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ReferralService } from '@/lib/referral';
 import { logger } from '@/lib/logger';
-import { rateLimit, RATE_LIMITS } from '@/lib/rate-limiter';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limiter';
 import { validateInput, referralValidationSchema, ValidationError } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Rate limiting
-    if (!rateLimit(`referral:${ip}`, RATE_LIMITS.referral)) {
+    if (!checkRateLimit(`referral:${ip}`, RATE_LIMITS.referral)) {
       logger.warn('Rate limit exceeded', {
         endpoint: '/api/referral',
         ip,
@@ -34,11 +34,24 @@ export async function GET(request: NextRequest) {
 
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
+    logger.debug('Session debug', {
+      sessionExists: !!session,
+      session: session ? JSON.stringify(session, null, 2) : null,
+      userExists: !!session?.user,
+      userIdExists: !!session?.user?.id,
+      emailExists: !!session?.user?.email
+    });
+
+    if (!session?.user?.id || !session?.user?.email) {
       logger.warn('Unauthorized access attempt', {
         endpoint: '/api/referral',
         ip,
-        userAgent
+        userAgent,
+        sessionExists: !!session,
+        userExists: !!session?.user,
+        userIdExists: !!session?.user?.id,
+        emailExists: !!session?.user?.email,
+        fullSession: session ? JSON.stringify(session) : 'null'
       });
       return NextResponse.json(
         { message: 'Unauthorized' },
@@ -47,12 +60,33 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    const email = session.user.email || '';
+    const email = session.user.email;
 
-    const [stats, userCode] = await Promise.all([
-      ReferralService.getReferralStats(userId),
-      ReferralService.createOrGetReferralCode(userId, email)
-    ]);
+    let stats, userCode;
+    try {
+      [stats, userCode] = await Promise.all([
+        ReferralService.getReferralStats(userId),
+        ReferralService.createOrGetReferralCode(userId, email)
+      ]);
+    } catch (serviceError) {
+      logger.warn('Referral service error, checking user existence', {
+        endpoint: '/api/referral',
+        userId,
+        email,
+        error: serviceError instanceof Error ? serviceError.message : 'Unknown error'
+      });
+
+      // If user not found, the session might be stale - return 401
+      if (serviceError instanceof Error && serviceError.message.includes('User not found')) {
+        return NextResponse.json(
+          { message: 'Session invalid - user not found' },
+          { status: 401 }
+        );
+      }
+
+      // Re-throw other errors to be caught by the outer catch block
+      throw serviceError;
+    }
 
     const duration = Date.now() - startTime;
 
@@ -102,7 +136,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Rate limiting
-    if (!rateLimit(`referral:${ip}`, RATE_LIMITS.referral)) {
+    if (!checkRateLimit(`referral:${ip}`, RATE_LIMITS.referral)) {
       logger.warn('Rate limit exceeded', {
         endpoint: '/api/referral',
         ip,

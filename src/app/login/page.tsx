@@ -20,6 +20,7 @@ export default function LoginPage() {
     setError('');
 
     try {
+      // Direct NextAuth signin for testing
       const result = await signIn('credentials', {
         email,
         password,
@@ -27,7 +28,11 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        if (result.error.includes('EMAIL_NOT_VERIFIED')) {
+          setError('Please verify your email before signing in. Check your email for the verification link.');
+        } else {
+          setError('Invalid email or password');
+        }
       } else {
         router.push('/');
       }

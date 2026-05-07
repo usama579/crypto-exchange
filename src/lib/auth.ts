@@ -37,6 +37,12 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          // Check if email is verified
+          if (!user.isEmailVerified) {
+            // Throw a specific error that NextAuth can handle
+            throw new Error('EMAIL_NOT_VERIFIED');
+          }
+
           // Return user data for session
           return {
             id: user.id,
@@ -44,9 +50,14 @@ export const authOptions: NextAuthOptions = {
             name: `${user.firstName} ${user.lastName}`,
             firstName: user.firstName,
             lastName: user.lastName,
+            isEmailVerified: user.isEmailVerified,
           };
         } catch (error) {
           console.error('Authentication error:', error);
+          // Re-throw the error so NextAuth can handle it
+          if (error instanceof Error) {
+            throw error;
+          }
           return null;
         }
       }

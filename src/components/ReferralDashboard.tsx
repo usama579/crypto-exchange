@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Users, Gift, Lock, Unlock, Copy, Share2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Users, Gift, Lock, Unlock, Copy, Share2, LogIn } from 'lucide-react';
 
 interface ReferralStats {
   totalReferred: number;
@@ -18,13 +19,18 @@ interface ReferralData {
 }
 
 export default function ReferralDashboard() {
+  const { data: session, status } = useSession();
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchReferralData();
-  }, []);
+    if (session) {
+      fetchReferralData();
+    } else if (status !== 'loading') {
+      setLoading(false);
+    }
+  }, [session, status]);
 
   const fetchReferralData = async () => {
     try {
@@ -71,6 +77,32 @@ export default function ReferralDashboard() {
           <div className="space-y-3">
             <div className="h-4 bg-gray-200 rounded"></div>
             <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-8 text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <LogIn size={32} className="text-blue-600" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h3>
+        <p className="text-gray-600 mb-6">Please log in to view your referral dashboard and manage your referral program.</p>
+        <div className="space-y-3">
+          <a
+            href="/login"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </a>
+          <div>
+            <span className="text-gray-500">Don't have an account? </span>
+            <a href="/signup" className="text-blue-600 hover:text-blue-700">
+              Sign up
+            </a>
           </div>
         </div>
       </div>

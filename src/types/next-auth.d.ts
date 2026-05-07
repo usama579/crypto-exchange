@@ -9,6 +9,9 @@ declare module "next-auth" {
       image?: string | null
       firstName?: string
       lastName?: string
+      isEmailVerified?: boolean
+      referralCode?: string
+      createdAt?: string
     }
   }
 
@@ -19,5 +22,8 @@ declare module "next-auth" {
     image?: string | null
     firstName?: string
     lastName?: string
+    isEmailVerified?: boolean
+    referralCode?: string
+    createdAt?: string
   }
 }

@@ -51,173 +51,129 @@ export default function CopyTrading() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState<'all' | 'performance' | 'followers'>('all');
 
-  // Mock data for top traders
-  const [topTraders] = useState<Trader[]>([
-    {
-      id: '1',
-      name: 'CryptoPro_Alex',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
-      verified: true,
-      followers: 12420,
-      totalReturn: 245.6,
-      monthlyReturn: 18.3,
-      winRate: 78.5,
-      tradingPairs: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
-      riskLevel: 'Medium',
-      minCopy: 100,
-      description: 'Professional trader with 5+ years experience in crypto markets. Specializing in swing trading and technical analysis.',
-      joinedDate: '2021-03-15',
-      recentTrades: [
-        { id: '1', symbol: 'BTCUSDT', side: 'buy', amount: 0.5, price: 45000, profit: 1250, date: '2024-01-15' },
-        { id: '2', symbol: 'ETHUSDT', side: 'sell', amount: 2.0, price: 3000, profit: -150, date: '2024-01-14' },
-      ]
-    },
-    {
-      id: '2',
-      name: 'DefiMaster_Sarah',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
-      verified: true,
-      followers: 8745,
-      totalReturn: 189.2,
-      monthlyReturn: 15.7,
-      winRate: 72.1,
-      tradingPairs: ['ETH/USDT', 'ADA/USDT', 'SOL/USDT'],
-      riskLevel: 'Low',
-      minCopy: 50,
-      description: 'Conservative trader focused on long-term growth. Expert in DeFi protocols and fundamental analysis.',
-      joinedDate: '2021-07-22',
-      recentTrades: [
-        { id: '3', symbol: 'ETHUSDT', side: 'buy', amount: 1.5, price: 2950, profit: 450, date: '2024-01-15' },
-        { id: '4', symbol: 'SOLUSDT', side: 'buy', amount: 10, price: 100, profit: 200, date: '2024-01-13' },
-      ]
-    },
-    {
-      id: '3',
-      name: 'RiskTaker_Mike',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike',
-      verified: false,
-      followers: 5230,
-      totalReturn: 412.8,
-      monthlyReturn: 28.5,
-      winRate: 65.3,
-      tradingPairs: ['BTC/USDT', 'ETH/USDT', 'DOGE/USDT'],
-      riskLevel: 'High',
-      minCopy: 200,
-      description: 'High-risk high-reward trading strategy. Perfect for experienced traders looking for aggressive growth.',
-      joinedDate: '2022-01-10',
-      recentTrades: [
-        { id: '5', symbol: 'BTCUSDT', side: 'buy', amount: 1.0, price: 44500, profit: 2250, date: '2024-01-15' },
-        { id: '6', symbol: 'DOGEUSDT', side: 'sell', amount: 1000, price: 0.08, profit: -50, date: '2024-01-14' },
-      ]
-    },
-    {
-      id: '4',
-      name: 'TechAnalyst_Emma',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emma',
-      verified: true,
-      followers: 15680,
-      totalReturn: 167.3,
-      monthlyReturn: 12.9,
-      winRate: 81.2,
-      tradingPairs: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT'],
-      riskLevel: 'Medium',
-      minCopy: 75,
-      description: 'Technical analysis expert with consistent profits. Known for precise entry and exit points.',
-      joinedDate: '2020-11-08',
-      recentTrades: [
-        { id: '7', symbol: 'BTCUSDT', side: 'sell', amount: 0.3, price: 45500, profit: 650, date: '2024-01-15' },
-        { id: '8', symbol: 'ADAUSDT', side: 'buy', amount: 500, price: 0.5, profit: 125, date: '2024-01-14' },
-      ]
-    }
-  ]);
+  const [topTraders, setTopTraders] = useState<Trader[]>([]);
 
-  const [myPositions, setMyPositions] = useState<CopyPosition[]>([
-    {
-      id: '1',
-      traderId: '1',
-      traderName: 'CryptoPro_Alex',
-      amount: 500,
-      profit: 67.5,
-      profitPercent: 13.5,
-      startDate: '2024-01-10',
-      status: 'active'
-    },
-    {
-      id: '2',
-      traderId: '2',
-      traderName: 'DefiMaster_Sarah',
-      amount: 300,
-      profit: -15.2,
-      profitPercent: -5.1,
-      startDate: '2024-01-12',
-      status: 'active'
-    }
-  ]);
+  const [myPositions, setMyPositions] = useState<CopyPosition[]>([]);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1000);
-  }, []);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch pro traders
+        const tradersResponse = await fetch(`/api/trading/pro-traders?search=${searchTerm}&filterBy=${filterBy}`);
+        const tradersData = await tradersResponse.json();
+
+        if (tradersData.success) {
+          setTopTraders(tradersData.traders);
+        }
+
+        // Fetch user's copy positions if logged in
+        if (session?.user?.id) {
+          const positionsResponse = await fetch('/api/trading/copy-positions');
+          const positionsData = await positionsResponse.json();
+
+          if (positionsData.success) {
+            setMyPositions(positionsData.positions);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [session, searchTerm, filterBy]);
 
   const handleCopyTrader = async () => {
     if (!selectedTrader || !copyAmount || !session?.user?.id) return;
 
     const amount = parseFloat(copyAmount);
     if (amount < selectedTrader.minCopy) {
-      alert(`Minimum copy amount is $${selectedTrader.minCopy}`);
+      showNotification(`Minimum copy amount is $${selectedTrader.minCopy}`, 'error');
       return;
     }
 
-    const newPosition: CopyPosition = {
-      id: Date.now().toString(),
-      traderId: selectedTrader.id,
-      traderName: selectedTrader.name,
-      amount: amount,
-      profit: 0,
-      profitPercent: 0,
-      startDate: new Date().toISOString().split('T')[0],
-      status: 'active'
-    };
+    try {
+      const response = await fetch('/api/trading/copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          traderId: selectedTrader.id,
+          traderName: selectedTrader.name,
+          copyAmount: copyAmount
+        })
+      });
 
-    setMyPositions(prev => [...prev, newPosition]);
-    setShowCopyModal(false);
-    setCopyAmount('');
-    setSelectedTrader(null);
+      const data = await response.json();
 
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.innerHTML = `
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-        </svg>
-        <div>
-          <div class="font-medium">Successfully copying ${selectedTrader.name}!</div>
-          <div class="text-sm opacity-90">Investment: $${amount}</div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to start copy trading');
       }
-    }, 3000);
+
+      const newPosition: CopyPosition = {
+        id: data.position.id,
+        traderId: data.position.traderId,
+        traderName: data.position.traderName,
+        amount: parseFloat(data.position.copyAmount),
+        profit: 0,
+        profitPercent: 0,
+        startDate: new Date(data.position.startedAt).toISOString().split('T')[0],
+        status: 'active'
+      };
+
+      setMyPositions(prev => [...prev, newPosition]);
+      setShowCopyModal(false);
+      setCopyAmount('');
+      setSelectedTrader(null);
+
+      showNotification(`Successfully copying ${selectedTrader.name}!`, 'success');
+
+    } catch (error) {
+      console.error('Copy trading error:', error);
+      showNotification(error instanceof Error ? error.message : 'Failed to start copy trading', 'error');
+    }
   };
 
-  const stopCopying = (positionId: string) => {
-    setMyPositions(prev => prev.map(pos =>
-      pos.id === positionId ? { ...pos, status: 'paused' as const } : pos
-    ));
+  const stopCopying = async (positionId: string) => {
+    try {
+      const response = await fetch('/api/trading/close', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ positionId, type: 'copy' })
+      });
 
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to stop copy trading');
+      }
+
+      setMyPositions(prev => prev.map(pos =>
+        pos.id === positionId ? { ...pos, status: 'paused' as const } : pos
+      ));
+
+      showNotification('Copy trading paused', 'success');
+
+    } catch (error) {
+      console.error('Stop copy trading error:', error);
+      showNotification(error instanceof Error ? error.message : 'Failed to stop copy trading', 'error');
+    }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-orange-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.className = `fixed top-4 right-4 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
     notification.innerHTML = `
       <div class="flex items-center">
         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+          ${type === 'success'
+            ? '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>'
+            : '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>'
+          }
         </svg>
-        Copy trading paused
+        ${message}
       </div>
     `;
     document.body.appendChild(notification);
@@ -500,8 +456,8 @@ export default function CopyTrading() {
 
       {/* Copy Modal */}
       {showCopyModal && selectedTrader && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">
                 Copy {selectedTrader.name}

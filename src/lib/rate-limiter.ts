@@ -10,7 +10,7 @@ export interface RateLimitOptions {
   maxRequests: number; // Maximum number of requests per window
 }
 
-export function rateLimit(key: string, options: RateLimitOptions): boolean {
+export function checkRateLimit(key: string, options: RateLimitOptions): boolean {
   const now = Date.now();
   const existing = rateLimitMap.get(key);
 
@@ -52,4 +52,14 @@ export const RATE_LIMITS = {
   login: { windowMs: 15 * 60 * 1000, maxRequests: 5 }, // 5 requests per 15 minutes
   referral: { windowMs: 60 * 1000, maxRequests: 10 }, // 10 requests per minute
   deposit: { windowMs: 5 * 60 * 1000, maxRequests: 20 }, // 20 requests per 5 minutes
+  trading: { windowMs: 60 * 1000, maxRequests: 30 }, // 30 requests per minute
 } as const;
+
+export async function rateLimit(request: Request): Promise<{ success: boolean }> {
+  const ip = request.headers.get('x-forwarded-for') || 'unknown';
+  const userAgent = request.headers.get('user-agent') || '';
+  const key = `${ip}:${userAgent}`;
+
+  const success = checkRateLimit(key, RATE_LIMITS.trading);
+  return { success };
+}

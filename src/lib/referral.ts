@@ -16,6 +16,10 @@ export class ReferralService {
   }
 
   static async createOrGetReferralCode(userId: string, email: string): Promise<string> {
+    if (!userId || !email) {
+      throw new Error('Invalid user data provided');
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });
@@ -294,6 +298,10 @@ export class ReferralService {
   }
 
   static async getReferralStats(userId: string) {
+    if (!userId) {
+      throw new Error('Invalid user ID provided');
+    }
+
     const [referrals, lockedBalances, totalReferred] = await Promise.all([
       prisma.referral.findMany({
         where: { referrerId: userId },

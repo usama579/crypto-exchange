@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation';
 import TradingView from '@/components/TradingView';
 import WalletComponent from '@/components/Wallet';
 import ReferralDashboard from '@/components/ReferralDashboard';
+import Profile from '@/components/Profile';
 import About from '@/components/About';
 import Blog from '@/components/Blog';
 
@@ -19,6 +20,8 @@ export default function Home() {
         return <WalletComponent />;
       case 'referral':
         return <ReferralDashboard />;
+      case 'profile':
+        return <Profile />;
       case 'about':
         return <About />;
       case 'blog':
