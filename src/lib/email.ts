@@ -1,7 +1,9 @@
-import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize SendGrid
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 export interface SendEmailOptions {
   to: string;
@@ -12,20 +14,24 @@ export interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<boolean> {
   try {
-    const { data, error } = await resend.emails.send({
-      from: `${process.env.EMAIL_FROM_NAME || 'CryptoExchange'} <${process.env.EMAIL_FROM_ADDRESS || 'onboarding@resend.dev'}>`,
-      to,
-      subject,
-      html,
-      text,
-    });
+    console.log('Attempting to send email to:', to);
+    console.log('API Key configured:', !!process.env.SENDGRID_API_KEY);
 
-    if (error) {
-      console.error('Error sending email:', error);
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('SendGrid API key not configured');
       return false;
     }
 
-    console.log('Email sent successfully:', data?.id);
+    const msg = {
+      to,
+      from: `${process.env.EMAIL_FROM_NAME || 'CryptoExchange'} <${process.env.EMAIL_FROM_ADDRESS || 'noreply@example.com'}>`,
+      subject,
+      text,
+      html,
+    };
+
+    const result = await sgMail.send(msg);
+    console.log('Email sent successfully:', result[0].statusCode);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
