@@ -34,25 +34,10 @@ export async function GET(request: NextRequest) {
 
     const session = await getServerSession(authOptions);
 
-    logger.debug('Session debug', {
-      sessionExists: !!session,
-      session: session ? JSON.stringify(session, null, 2) : null,
-      userExists: !!session?.user,
-      userIdExists: !!session?.user?.id,
-      emailExists: !!session?.user?.email
-    });
+    logger.debug('Session debug');
 
     if (!session?.user?.id || !session?.user?.email) {
-      logger.warn('Unauthorized access attempt', {
-        endpoint: '/api/referral',
-        ip,
-        userAgent,
-        sessionExists: !!session,
-        userExists: !!session?.user,
-        userIdExists: !!session?.user?.id,
-        emailExists: !!session?.user?.email,
-        fullSession: session ? JSON.stringify(session) : 'null'
-      });
+      logger.warn('Unauthorized access attempt');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
