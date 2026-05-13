@@ -1,21 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
 import WalletConnector from './WalletConnector';
+import { useCryptoStore } from '@/store/cryptoStore';
+import { fetchCryptoData } from '@/lib/cryptoApi';
 
 interface Asset {
   id: string;
   symbol: string;
   name: string;
   balance: string;
-  value?: string;
-  change?: string;
 }
 
 export default function WalletComponent() {
   const { data: session, status } = useSession();
+  const { prices, setPrices } = useCryptoStore();
   const [showBalance, setShowBalance] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -27,10 +28,18 @@ export default function WalletComponent() {
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [totalBalance, setTotalBalance] = useState('0.00');
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
 
-  // Fetch wallet data
+  // Ensure live prices are loaded into the store
+  useEffect(() => {
+    if (prices.length === 0) {
+      fetchCryptoData().then(data => {
+        if (data.length > 0) setPrices(data);
+      });
+    }
+  }, [prices.length, setPrices]);
+
+  // Fetch wallet data (raw balances only — values computed from live prices)
   useEffect(() => {
     const fetchWalletData = async () => {
       if (!session?.user?.id) {
@@ -42,23 +51,13 @@ export default function WalletComponent() {
         const response = await fetch('/api/wallet/balance');
         if (response.ok) {
           const data = await response.json();
-          const walletsData = data.wallets.map((wallet: any) => ({
+          const walletsData: Asset[] = data.wallets.map((wallet: any) => ({
             id: wallet.id,
             symbol: wallet.symbol,
             name: wallet.name || wallet.symbol,
             balance: parseFloat(wallet.balance).toFixed(6),
-            value: (parseFloat(wallet.balance) * getPrice(wallet.symbol)).toFixed(2),
-            change: '0.00' // This would come from price API in production
           }));
-
           setAssets(walletsData);
-
-          // Calculate total balance in USD
-          const total = walletsData.reduce((sum: number, asset: Asset) => {
-            return sum + parseFloat(asset.value || '0');
-          }, 0);
-
-          setTotalBalance(total.toFixed(2));
         } else {
           console.error('Failed to fetch wallet data');
         }
@@ -72,19 +71,20 @@ export default function WalletComponent() {
     fetchWalletData();
   }, [session]);
 
-  // Helper function to get crypto prices (mock data for now)
-  const getPrice = (symbol: string): number => {
-    const prices: { [key: string]: number } = {
-      'BTC': 45000,
-      'ETH': 3000,
-      'BNB': 300,
-      'USDT': 1,
-      'ADA': 0.5,
-      'SOL': 100,
-      'DOT': 25
-    };
-    return prices[symbol] || 1;
+  // Resolve live USD price for a wallet symbol using the Binance price store
+  const getLivePrice = (symbol: string): number => {
+    if (symbol === 'USDT') return 1;
+    const ticker = prices.find(p => p.symbol === `${symbol}USDT`);
+    return ticker ? parseFloat(ticker.price) : 0;
   };
+
+  // Total portfolio value — recomputed whenever assets or live prices change
+  const totalBalance = useMemo(() => {
+    const total = assets.reduce((sum, asset) => {
+      return sum + parseFloat(asset.balance) * getLivePrice(asset.symbol);
+    }, 0);
+    return total.toFixed(2);
+  }, [assets, prices]);
 
   if (status === 'loading') {
     return (
@@ -250,10 +250,10 @@ export default function WalletComponent() {
                     </div>
                   </div>
                   <div className="text-right font-mono text-gray-900">{asset.balance}</div>
-                  <div className="text-right text-gray-900">${asset.value}</div>
-                  <div className={`text-right font-medium ${parseFloat(asset.change || '0') >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                    {parseFloat(asset.change || '0') >= 0 ? '+' : ''}{asset.change}%
+                  <div className="text-right text-gray-900">
+                    ${(parseFloat(asset.balance) * getLivePrice(asset.symbol)).toFixed(2)}
                   </div>
+                  <div className="text-right font-medium text-gray-500">—</div>
                   <div className="text-right space-x-2">
                     <button
                       onClick={() => window.location.href = '/trading'}
@@ -275,7 +275,7 @@ export default function WalletComponent() {
               ))
             ) : (
               <div className="p-8 text-center text-gray-500">
-                <Wallet size={48} className="mx-auto mb-4 text-gray-300" />
+                <Wallet size={48} className="mx-auto mb-4 text-gray-400" />
                 <div className="text-lg font-medium mb-2">No assets yet</div>
                 <div className="text-sm">Start by depositing some cryptocurrency to your wallet</div>
                 <button
@@ -326,9 +326,11 @@ export default function WalletComponent() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium text-gray-900">${asset.value}</div>
-                      <div className={`text-sm font-medium ${parseFloat(asset.change || '0') >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                        {parseFloat(asset.change || '0') >= 0 ? '+' : ''}{asset.change}%
+                      <div className="font-medium text-gray-900">
+                        ${(parseFloat(asset.balance) * getLivePrice(asset.symbol)).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        @${getLivePrice(asset.symbol).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                       </div>
                     </div>
                   </div>
@@ -353,7 +355,7 @@ export default function WalletComponent() {
             <div className="space-y-4">
               <div className="text-center text-gray-500 py-8">
                 <div className="text-sm">No recent transactions</div>
-                <div className="text-xs text-gray-400 mt-1">Your transaction history will appear here</div>
+                <div className="text-xs text-gray-600 mt-1">Your transaction history will appear here</div>
               </div>
             </div>
           </div>
@@ -377,10 +379,10 @@ export default function WalletComponent() {
           </div>
           <div className="p-8 text-center text-gray-500">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ArrowUpDown size={24} className="text-gray-400" />
+              <ArrowUpDown size={24} className="text-gray-500" />
             </div>
             <div className="text-lg font-medium mb-2">No transactions yet</div>
-            <div className="text-sm text-gray-400 mb-4">Your transaction history will appear here once you start trading</div>
+            <div className="text-sm text-gray-600 mb-4">Your transaction history will appear here once you start trading</div>
             <div className="flex space-x-3 justify-center">
               <button
                 onClick={() => setShowDepositModal(true)}
@@ -519,7 +521,7 @@ export default function WalletComponent() {
 
                     <button
                       onClick={() => {
-                        setSelectedAssetForDeposit(selectedAssetForDeposit || { id: 'btc-default', symbol: 'BTC', name: 'Bitcoin', balance: '0', value: '0', change: '0' });
+                        setSelectedAssetForDeposit(selectedAssetForDeposit || { id: 'btc-default', symbol: 'BTC', name: 'Bitcoin', balance: '0' });
                         setShowQRModal(true);
                         setShowDepositModal(false);
                       }}
@@ -641,7 +643,9 @@ export default function WalletComponent() {
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-gray-900">{selectedAssetForWithdrawal.balance} {selectedAssetForWithdrawal.symbol}</div>
-                        <div className="text-sm text-gray-500">${selectedAssetForWithdrawal.value}</div>
+                        <div className="text-sm text-gray-500">
+                          ${(parseFloat(selectedAssetForWithdrawal.balance) * getLivePrice(selectedAssetForWithdrawal.symbol)).toFixed(2)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -685,7 +689,7 @@ export default function WalletComponent() {
                     </div>
                     <div className="flex justify-between text-sm mt-2">
                       <span className="text-gray-500">Network fee: 0.0005 {selectedAssetForWithdrawal.symbol}</span>
-                      <span className="text-gray-600">≈ ${(parseFloat(withdrawalAmount || '0') * parseFloat(selectedAssetForWithdrawal.value || '0') / parseFloat(selectedAssetForWithdrawal.balance)).toFixed(2)}</span>
+                      <span className="text-gray-600">≈ ${(parseFloat(withdrawalAmount || '0') * getLivePrice(selectedAssetForWithdrawal.symbol)).toFixed(2)}</span>
                     </div>
                   </div>
 

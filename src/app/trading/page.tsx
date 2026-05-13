@@ -67,7 +67,7 @@ export default function TradingPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center mb-4">
@@ -86,52 +86,52 @@ export default function TradingPage() {
 
         {/* Trading Type Tabs */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="flex">
+          <div className="flex flex-col md:flex-row">
             {/* Spot Trading Tab */}
             <button
               onClick={() => setActiveTab('spot')}
-              className={`flex-1 flex items-center justify-center px-6 py-4 border-b-2 transition-colors ${
+              className={`flex-1 flex items-center justify-center md:justify-start px-4 md:px-6 py-4 border-b-2 md:border-b-2 transition-colors ${
                 activeTab === 'spot'
                   ? 'border-green-500 bg-green-50 text-green-700'
                   : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             >
               <TrendingUp size={20} className="mr-2" />
-              <div className="text-left">
+              <div className="text-center md:text-left">
                 <div className="font-semibold">Spot Trading</div>
-                <div className="text-sm opacity-75">Buy & sell instantly</div>
+                <div className={`text-sm ${activeTab === 'spot' ? 'text-green-600' : 'text-gray-500'}`}>Buy & sell instantly</div>
               </div>
             </button>
 
             {/* Futures Trading Tab */}
             <button
               onClick={() => setActiveTab('futures')}
-              className={`flex-1 flex items-center justify-center px-6 py-4 border-b-2 transition-colors ${
+              className={`flex-1 flex items-center justify-center md:justify-start px-4 md:px-6 py-4 border-b-2 md:border-b-2 transition-colors ${
                 activeTab === 'futures'
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             >
               <Target size={20} className="mr-2" />
-              <div className="text-left">
+              <div className="text-center md:text-left">
                 <div className="font-semibold">Futures Trading</div>
-                <div className="text-sm opacity-75">Leverage up to 100x</div>
+                <div className={`text-sm ${activeTab === 'futures' ? 'text-blue-600' : 'text-gray-500'}`}>Leverage up to 100x</div>
               </div>
             </button>
 
             {/* Copy Trading Tab */}
             <button
               onClick={() => setActiveTab('copy')}
-              className={`flex-1 flex items-center justify-center px-6 py-4 border-b-2 transition-colors ${
+              className={`flex-1 flex items-center justify-center md:justify-start px-4 md:px-6 py-4 border-b-2 md:border-b-2 transition-colors ${
                 activeTab === 'copy'
                   ? 'border-purple-500 bg-purple-50 text-purple-700'
                   : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
               }`}
             >
               <Users size={20} className="mr-2" />
-              <div className="text-left">
+              <div className="text-center md:text-left">
                 <div className="font-semibold">Copy Trading</div>
-                <div className="text-sm opacity-75">Follow top traders</div>
+                <div className={`text-sm ${activeTab === 'copy' ? 'text-purple-600' : 'text-gray-500'}`}>Follow top traders</div>
               </div>
             </button>
           </div>

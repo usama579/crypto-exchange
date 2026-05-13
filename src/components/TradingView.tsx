@@ -131,7 +131,7 @@ export default function TradingView() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Live Trading</h1>
@@ -149,15 +149,15 @@ export default function TradingView() {
             )}
           </div>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
           <input
             type="text"
             placeholder="Search cryptocurrencies..."
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full md:max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-4">
             <select
               value={itemsPerPage}
               onChange={(e) => {
@@ -171,7 +171,7 @@ export default function TradingView() {
               <option value={100}>100 per page</option>
               <option value={200}>200 per page</option>
             </select>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-600">
               Showing {startIndex + 1}-{Math.min(endIndex, filteredPrices.length)} of {filteredPrices.length} cryptocurrencies
             </div>
           </div>
@@ -179,7 +179,8 @@ export default function TradingView() {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="grid grid-cols-8 gap-4 p-4 bg-gray-50 font-semibold text-gray-700">
+        {/* Desktop Header - Hidden on mobile */}
+        <div className="hidden md:grid md:grid-cols-8 gap-4 p-4 bg-gray-50 font-semibold text-gray-700">
           <div>Symbol</div>
           <div className="text-right">Price (USDT)</div>
           <div className="text-right">24h Change</div>
@@ -194,50 +195,109 @@ export default function TradingView() {
           {paginatedPrices.map((crypto) => {
             const isPositive = parseFloat(crypto.changePercent) >= 0;
             return (
-              <div
-                key={crypto.symbol}
-                className="grid grid-cols-8 gap-4 p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="font-medium text-gray-900">{formatSymbol(crypto.symbol)}</div>
-                <div className="text-right font-mono font-semibold text-gray-900">
-                  ${formatPrice(crypto.price)}
+              <div key={crypto.symbol}>
+                {/* Mobile Layout */}
+                <div className="md:hidden p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="font-bold text-lg text-gray-900">{formatSymbol(crypto.symbol)}</div>
+                      <div className="text-2xl font-mono font-bold text-gray-900">
+                        ${formatPrice(crypto.price)}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`flex items-center justify-end font-bold text-lg ${
+                          isPositive ? 'text-green-600' : 'text-red-600'
+                        }`}
+                      >
+                        {isPositive ? (
+                          <TrendingUp size={20} className="mr-1" />
+                        ) : (
+                          <TrendingDown size={20} className="mr-1" />
+                        )}
+                        {isPositive ? '+' : ''}{formatPercent(crypto.changePercent)}%
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">24h Change:</span>
+                      <div className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                        {isPositive ? '+' : ''}{formatPercent(crypto.change)}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Volume:</span>
+                      <div className="font-medium text-gray-900">
+                        {parseFloat(crypto.volume).toFixed(0)}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">High:</span>
+                      <div className="font-medium text-gray-900">${formatPrice(crypto.high)}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Low:</span>
+                      <div className="font-medium text-gray-900">${formatPrice(crypto.low)}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      onClick={() => setDetailedCrypto(crypto)}
+                      className="w-full text-blue-600 hover:text-blue-800 text-sm px-4 py-2 rounded border border-blue-200 hover:bg-blue-50 transition-colors flex items-center justify-center"
+                    >
+                      <BarChart3 size={16} className="mr-2" />
+                      View Details
+                    </button>
+                  </div>
                 </div>
-                <div
-                  className={`text-right flex items-center justify-end font-medium ${
-                    isPositive ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {isPositive ? (
-                    <TrendingUp size={16} className="mr-1" />
-                  ) : (
-                    <TrendingDown size={16} className="mr-1" />
-                  )}
-                  {isPositive ? '+' : ''}{formatPercent(crypto.change)}
-                </div>
-                <div
-                  className={`text-right font-medium ${
-                    isPositive ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {isPositive ? '+' : ''}{formatPercent(crypto.changePercent)}%
-                </div>
-                <div className="text-right text-gray-700 font-medium">
-                  ${formatPrice(crypto.high)}
-                </div>
-                <div className="text-right text-gray-700 font-medium">
-                  ${formatPrice(crypto.low)}
-                </div>
-                <div className="text-right text-gray-700 font-medium">
-                  {parseFloat(crypto.volume).toFixed(0)}
-                </div>
-                <div className="text-right flex items-center justify-end space-x-2">
-                  <button
-                    onClick={() => setDetailedCrypto(crypto)}
-                    className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded hover:bg-blue-50 transition-colors flex items-center"
+
+                {/* Desktop Layout */}
+                <div className="hidden md:grid md:grid-cols-8 gap-4 p-4 hover:bg-gray-50 transition-colors">
+                  <div className="font-medium text-gray-900">{formatSymbol(crypto.symbol)}</div>
+                  <div className="text-right font-mono font-semibold text-gray-900">
+                    ${formatPrice(crypto.price)}
+                  </div>
+                  <div
+                    className={`text-right flex items-center justify-end font-medium ${
+                      isPositive ? 'text-green-600' : 'text-red-600'
+                    }`}
                   >
-                    <BarChart3 size={14} className="mr-1" />
-                    Details
-                  </button>
+                    {isPositive ? (
+                      <TrendingUp size={16} className="mr-1" />
+                    ) : (
+                      <TrendingDown size={16} className="mr-1" />
+                    )}
+                    {isPositive ? '+' : ''}{formatPercent(crypto.change)}
+                  </div>
+                  <div
+                    className={`text-right font-medium ${
+                      isPositive ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {isPositive ? '+' : ''}{formatPercent(crypto.changePercent)}%
+                  </div>
+                  <div className="text-right text-gray-700 font-medium">
+                    ${formatPrice(crypto.high)}
+                  </div>
+                  <div className="text-right text-gray-700 font-medium">
+                    ${formatPrice(crypto.low)}
+                  </div>
+                  <div className="text-right text-gray-700 font-medium">
+                    {parseFloat(crypto.volume).toFixed(0)}
+                  </div>
+                  <div className="text-right flex items-center justify-end space-x-2">
+                    <button
+                      onClick={() => setDetailedCrypto(crypto)}
+                      className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded hover:bg-blue-50 transition-colors flex items-center"
+                    >
+                      <BarChart3 size={14} className="mr-1" />
+                      Details
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -246,61 +306,65 @@ export default function TradingView() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <div className="flex items-center">
+          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:items-center md:justify-between px-4 py-3 border-t border-gray-200">
+            <div className="flex items-center justify-center md:justify-start">
               <p className="text-sm text-gray-700">
                 Page <span className="font-medium">{currentPage}</span> of{' '}
                 <span className="font-medium">{totalPages}</span>
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="flex items-center px-3 py-1 text-sm text-gray-500 border border-gray-300 rounded hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft size={16} className="mr-1" />
-                Previous
-              </button>
+            <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2">
+              <div className="flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center px-3 py-1 text-sm text-gray-500 border border-gray-300 rounded hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} className="mr-1" />
+                  <span className="hidden sm:inline">Previous</span>
+                  <span className="sm:hidden">Prev</span>
+                </button>
 
-              {/* Page numbers */}
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNumber;
-                  if (totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNumber = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNumber = totalPages - 4 + i;
-                  } else {
-                    pageNumber = currentPage - 2 + i;
-                  }
+                {/* Page numbers - Hide on very small screens */}
+                <div className="hidden sm:flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
 
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => setCurrentPage(pageNumber)}
-                      className={`px-3 py-1 text-sm border rounded ${
-                        currentPage === pageNumber
-                          ? 'bg-blue-500 text-white border-blue-500'
-                          : 'text-gray-500 border-gray-300 hover:text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`px-3 py-1 text-sm border rounded ${
+                          currentPage === pageNumber
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'text-gray-500 border-gray-300 hover:text-gray-700 hover:border-gray-400'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center px-3 py-1 text-sm text-gray-500 border border-gray-300 rounded hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <span className="sm:hidden">Next</span>
+                  <ChevronRight size={16} className="ml-1" />
+                </button>
               </div>
-
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="flex items-center px-3 py-1 text-sm text-gray-500 border border-gray-300 rounded hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-                <ChevronRight size={16} className="ml-1" />
-              </button>
             </div>
           </div>
         )}
@@ -309,18 +373,18 @@ export default function TradingView() {
       {isLoading && (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-gray-500">Loading cryptocurrency data...</div>
+          <div className="text-gray-600">Loading cryptocurrency data...</div>
         </div>
       )}
 
       {!isLoading && filteredPrices.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-600">
           {prices.length === 0 ? 'No data available. Please check your connection.' : 'No results found for your search.'}
         </div>
       )}
 
       {!isLoading && paginatedPrices.length === 0 && filteredPrices.length > 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-600">
           No results on this page. Try going to page 1.
         </div>
       )}

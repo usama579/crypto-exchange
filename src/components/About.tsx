@@ -116,7 +116,7 @@ export default function About() {
             <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">John Smith</h3>
             <p className="text-gray-600 mb-2">CEO & Co-Founder</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Former Wall Street executive with 15 years of fintech experience.
             </p>
           </div>
@@ -124,7 +124,7 @@ export default function About() {
             <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Sarah Johnson</h3>
             <p className="text-gray-600 mb-2">CTO & Co-Founder</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Blockchain expert and former Google software engineer.
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function About() {
             <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Mike Chen</h3>
             <p className="text-gray-600 mb-2">Head of Security</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Cybersecurity specialist with expertise in cryptocurrency security.
             </p>
           </div>

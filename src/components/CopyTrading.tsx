@@ -233,7 +233,7 @@ export default function CopyTrading() {
           <p className="text-gray-600">Follow and automatically copy trades from successful traders</p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-500">Active Copies: {myPositions.filter(p => p.status === 'active').length}</div>
+          <div className="text-sm text-gray-600">Active Copies: {myPositions.filter(p => p.status === 'active').length}</div>
         </div>
       </div>
 
@@ -258,8 +258,8 @@ export default function CopyTrading() {
         </div>
 
         {myPositions.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Users size={48} className="mx-auto mb-4 text-gray-300" />
+          <div className="p-8 text-center text-gray-600">
+            <Users size={48} className="mx-auto mb-4 text-gray-400" />
             <div className="text-lg font-medium mb-2">No copy positions</div>
             <div className="text-sm">Start copying successful traders to diversify your portfolio</div>
           </div>
@@ -268,12 +268,12 @@ export default function CopyTrading() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trader</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Investment</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit/Loss</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Trader</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Investment</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Profit/Loss</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Start Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -426,12 +426,12 @@ export default function CopyTrading() {
                 <div className="text-xs text-gray-500 mb-2">Trading Pairs:</div>
                 <div className="flex flex-wrap gap-1">
                   {trader.tradingPairs.slice(0, 3).map((pair, index) => (
-                    <span key={index} className="px-2 py-1 bg-gray-100 text-xs rounded">
+                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                       {pair}
                     </span>
                   ))}
                   {trader.tradingPairs.length > 3 && (
-                    <span className="px-2 py-1 bg-gray-100 text-xs rounded">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                       +{trader.tradingPairs.length - 3} more
                     </span>
                   )}

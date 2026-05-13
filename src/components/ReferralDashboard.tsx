@@ -273,7 +273,7 @@ export default function ReferralDashboard() {
       {/* Recent Referrals */}
       {data.stats.referrals.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Referrals</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900">Recent Referrals</h3>
           <div className="space-y-3">
             {data.stats.referrals.map((referral, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

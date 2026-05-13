@@ -139,7 +139,7 @@ export default function Blog() {
             <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100"></div>
             <div className="p-6">
               <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
-                <span className="bg-gray-100 px-2 py-1 rounded font-medium">
+                <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
                   {post.category}
                 </span>
                 <span>{post.readTime}</span>

@@ -197,7 +197,7 @@ export default function FuturesTrading() {
           <p className="text-gray-600">Trade with leverage up to 100x</p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-500">Positions: {positions.length}</div>
+          <div className="text-sm text-gray-600">Positions: {positions.length}</div>
           {isConnected ? (
             <div className="flex items-center text-green-600 text-sm">
               <div className="w-2 h-2 bg-green-600 rounded-full mr-2"></div>
@@ -233,8 +233,8 @@ export default function FuturesTrading() {
         </div>
 
         {positions.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Target size={48} className="mx-auto mb-4 text-gray-300" />
+          <div className="p-8 text-center text-gray-600">
+            <Target size={48} className="mx-auto mb-4 text-gray-400" />
             <div className="text-lg font-medium mb-2">No active positions</div>
             <div className="text-sm">Open your first futures position to get started</div>
           </div>
@@ -243,14 +243,14 @@ export default function FuturesTrading() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Side</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PnL</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Margin</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Symbol</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Side</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Size</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Entry Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Current Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">PnL</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Margin</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -322,11 +322,11 @@ export default function FuturesTrading() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">24h Change</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Volume</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Symbol</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase">Price</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase">24h Change</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase">Volume</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">

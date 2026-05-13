@@ -76,7 +76,7 @@ export default function Profile() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <User size={64} className="mx-auto text-gray-400 mb-4" />
+          <User size={64} className="mx-auto text-gray-500 mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile</h2>
           <p className="text-gray-600">Please sign in to view your profile.</p>
         </div>
@@ -192,14 +192,14 @@ export default function Profile() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center">
-                <User size={20} className="text-gray-400 mr-3" />
+                <User size={20} className="text-gray-500 mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">First Name</p>
                   <p className="font-medium">{session.user.firstName || 'Not provided'}</p>
                 </div>
               </div>
               <div className="flex items-center">
-                <User size={20} className="text-gray-400 mr-3" />
+                <User size={20} className="text-gray-500 mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">Last Name</p>
                   <p className="font-medium">{session.user.lastName || 'Not provided'}</p>
@@ -207,14 +207,14 @@ export default function Profile() {
               </div>
             </div>
             <div className="flex items-center">
-              <Mail size={20} className="text-gray-400 mr-3" />
+              <Mail size={20} className="text-gray-500 mr-3" />
               <div>
                 <p className="text-sm text-gray-600">Email Address</p>
                 <p className="font-medium">{session.user.email}</p>
               </div>
             </div>
             <div className="flex items-center">
-              <Calendar size={20} className="text-gray-400 mr-3" />
+              <Calendar size={20} className="text-gray-500 mr-3" />
               <div>
                 <p className="text-sm text-gray-600">Member Since</p>
                 <p className="font-medium">
@@ -224,7 +224,7 @@ export default function Profile() {
             </div>
             {session.user.referralCode && (
               <div className="flex items-center">
-                <Key size={20} className="text-gray-400 mr-3" />
+                <Key size={20} className="text-gray-500 mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">Referral Code</p>
                   <p className="font-medium font-mono bg-gray-100 px-2 py-1 rounded">
@@ -254,7 +254,7 @@ export default function Profile() {
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center">
-              <Key size={20} className="text-gray-400 mr-3" />
+              <Key size={20} className="text-gray-500 mr-3" />
               <div>
                 <p className="font-medium">Password</p>
                 <p className="text-sm text-gray-600">Last changed: Not available</p>
@@ -266,7 +266,7 @@ export default function Profile() {
           </div>
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center">
-              <Mail size={20} className="text-gray-400 mr-3" />
+              <Mail size={20} className="text-gray-500 mr-3" />
               <div>
                 <p className="font-medium">Email Verification</p>
                 <p className="text-sm text-gray-600">
