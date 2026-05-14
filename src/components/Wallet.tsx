@@ -381,7 +381,7 @@ export default function WalletComponent() {
                         ${(parseFloat(asset.balance) * getLivePrice(asset.symbol)).toFixed(2)}
                       </div>
                       <div className="text-sm text-gray-500 text-right">
-                        ${getLivePrice(asset.symbol).toLocaleString('en-US', { maximumFractionDigits: 2 })} per coin
+                        ${getLivePrice(asset.symbol).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                       </div>
                     </div>
                   </div>
