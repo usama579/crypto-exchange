@@ -3,6 +3,57 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
+
+// USDT Icon Component - Official Tether Logo
+const USDTIcon = ({ size = 16, className = '' }) => (
+  <div className={`inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 50 50"
+      className="drop-shadow-sm"
+    >
+      <path
+        d="M 10.417969 5 L 2.0820312 22.949219 L 25 45 L 47.917969 22.949219 L 39.582031 5 L 10.417969 5 z M 12.957031 10.042969 L 36.957031 10.042969 L 37 16 L 28 16 L 28 19.490234 C 36.125 19.874234 39.582031 21.046969 39.582031 22.542969 C 39.582031 24.037969 34.551 25.694 28 26 L 28 37 L 22 37 L 22 26 C 15.449 25.694 10.417969 24.037969 10.417969 22.542969 C 10.417969 21.046969 13.875 19.749234 22 19.490234 L 22 16 L 13 16 L 12.957031 10.042969 z M 22 20.375 C 16.611 20.635 13 21.283 13 22.375 C 13 23.67 18.097 24.625 25 24.625 C 31.903 24.625 37 23.545 37 22.25 C 37 21.158 33.389 20.76 28 20.5 L 28 23 C 27 23.063 26.083 23.082031 25 23.082031 C 23.917 23.082031 23 23.062 22 23 L 22 20.375 z"
+        fill="#26A17B"
+      />
+    </svg>
+  </div>
+);
+
+// Crypto Icon Component
+const CryptoIcon = ({ symbol, size = 32 }) => {
+  if (symbol === 'USDT') {
+    return <USDTIcon size={size} />;
+  }
+
+  // For other cryptos, return a colored circle with symbol
+  const getColorForSymbol = (sym) => {
+    const colors = {
+      'BTC': '#F7931A',
+      'ETH': '#627EEA',
+      'BNB': '#F3BA2F',
+      'ADA': '#0033AD',
+      'SOL': '#9945FF'
+    };
+    return colors[sym] || '#6B7280';
+  };
+
+  return (
+    <div
+      className="rounded-full flex items-center justify-center text-white font-bold text-xs"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: getColorForSymbol(symbol),
+        fontSize: size * 0.35
+      }}
+    >
+      {symbol.slice(0, symbol === 'BTC' || symbol === 'ETH' || symbol === 'BNB' || symbol === 'ADA' || symbol === 'SOL' ? 3 : 2)}
+    </div>
+  );
+};
 import WalletConnector from './WalletConnector';
 import { useCryptoStore } from '@/store/cryptoStore';
 import { fetchCryptoData } from '@/lib/cryptoApi';
@@ -241,8 +292,8 @@ export default function WalletComponent() {
               assets.map((asset) => (
                 <div key={asset.id} className="grid grid-cols-5 gap-4 p-4 hover:bg-gray-50">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center text-xs font-semibold">
-                      {asset.symbol.slice(0, 2)}
+                    <div className="mr-3">
+                      <CryptoIcon symbol={asset.symbol} size={32} />
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">{asset.symbol}</div>
@@ -317,8 +368,8 @@ export default function WalletComponent() {
                 assets.slice(0, 3).map((asset) => (
                   <div key={asset.id} className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center text-xs font-semibold">
-                        {asset.symbol.slice(0, 2)}
+                      <div className="mr-3">
+                        <CryptoIcon symbol={asset.symbol} size={32} />
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{asset.symbol}</div>
@@ -329,8 +380,8 @@ export default function WalletComponent() {
                       <div className="font-medium text-gray-900">
                         ${(parseFloat(asset.balance) * getLivePrice(asset.symbol)).toFixed(2)}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        @${getLivePrice(asset.symbol).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      <div className="text-sm text-gray-500 text-right">
+                        ${getLivePrice(asset.symbol).toLocaleString('en-US', { maximumFractionDigits: 2 })} per coin
                       </div>
                     </div>
                   </div>
