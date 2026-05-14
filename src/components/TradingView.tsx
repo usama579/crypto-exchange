@@ -76,11 +76,10 @@ export default function TradingView() {
     };
   }, [setPrices, setIsConnected, isConnected]);
 
-  const filteredPrices = prices.filter(
-    (crypto) =>
-      crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      crypto.symbol.includes('USDT')
-  );
+  const filteredPrices = prices.filter((crypto) => {
+    if (!searchTerm.trim()) return true;
+    return crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredPrices.length / itemsPerPage);
@@ -153,7 +152,7 @@ export default function TradingView() {
           <input
             type="text"
             placeholder="Search cryptocurrencies..."
-            className="w-full md:max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full md:max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -223,23 +222,23 @@ export default function TradingView() {
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">24h Change:</span>
+                      <span className="text-gray-700">24h Change:</span>
                       <div className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                         {isPositive ? '+' : ''}{formatPercent(crypto.change)}
                       </div>
                     </div>
                     <div>
-                      <span className="text-gray-500">Volume:</span>
+                      <span className="text-gray-700">Volume:</span>
                       <div className="font-medium text-gray-900">
                         {parseFloat(crypto.volume).toFixed(0)}
                       </div>
                     </div>
                     <div>
-                      <span className="text-gray-500">High:</span>
+                      <span className="text-gray-700">High:</span>
                       <div className="font-medium text-gray-900">${formatPrice(crypto.high)}</div>
                     </div>
                     <div>
-                      <span className="text-gray-500">Low:</span>
+                      <span className="text-gray-700">Low:</span>
                       <div className="font-medium text-gray-900">${formatPrice(crypto.low)}</div>
                     </div>
                   </div>

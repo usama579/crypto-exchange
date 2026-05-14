@@ -19,8 +19,10 @@ export async function GET() {
     const wallets = await prisma.wallet.findMany({
       where: { userId: session.user.id },
       select: {
+        id: true,
         symbol: true,
         name: true,
+        address: true,
         balance: true
       }
     });
@@ -35,6 +37,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
+      wallets,
       balances
     });
 

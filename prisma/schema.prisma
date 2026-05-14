@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,46 +8,42 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  firstName    String
-  lastName     String
-  password     String
-  referralCode String?  @unique
-  referredBy   String?  // ID of user who referred this user
-  isEmailVerified Boolean @default(false)
-  emailVerificationToken String? @unique
+  id                            String                @id @default(cuid())
+  email                         String                @unique
+  firstName                     String
+  lastName                      String
+  password                      String
+  referralCode                  String?               @unique
+  referredBy                    String?
+  isEmailVerified               Boolean               @default(false)
+  emailVerificationToken        String?               @unique
   emailVerificationTokenExpires DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  wallets      Wallet[]
-  transactions Transaction[]
-  referrals    Referral[] @relation("ReferrerToReferrals")
-  referredByUser User? @relation("UserReferrals", fields: [referredBy], references: [id])
-  referredUsers User[] @relation("UserReferrals")
-  lockedBalances LockedBalance[]
-  tradingPositions TradingPosition[]
-  copyTradingPositions CopyTradingPosition[]
-  tradingOrders TradingOrder[]
+  createdAt                     DateTime              @default(now())
+  updatedAt                     DateTime              @updatedAt
+  copyTradingPositions          CopyTradingPosition[]
+  lockedBalances                LockedBalance[]
+  referrals                     Referral[]            @relation("ReferrerToReferrals")
+  tradingOrders                 TradingOrder[]
+  tradingPositions              TradingPosition[]
+  transactions                  Transaction[]
+  referredByUser                User?                 @relation("UserReferrals", fields: [referredBy], references: [id])
+  referredUsers                 User[]                @relation("UserReferrals")
+  wallets                       Wallet[]
 
   @@map("users")
 }
 
 model Wallet {
-  id        String   @id @default(cuid())
-  userId    String
-  symbol    String   // BTC, ETH, USDT, etc.
-  name      String   // Bitcoin, Ethereum, etc.
-  address   String   @unique // Deposit address
-  balance   String   @default("0") // Store as string for precision
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String        @id @default(cuid())
+  userId       String
+  symbol       String
+  name         String
+  address      String        @unique
+  balance      String        @default("0")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, symbol])
   @@map("wallets")
@@ -60,70 +53,64 @@ model Transaction {
   id            String   @id @default(cuid())
   userId        String
   walletId      String
-  txHash        String?  // Blockchain transaction hash
-  type          String   // DEPOSIT, WITHDRAWAL, TRADE
-  status        String   // PENDING, CONFIRMING, COMPLETED, FAILED, CANCELLED
-  amount        String   // Store as string for precision
-  symbol        String   // BTC, ETH, etc.
+  txHash        String?
+  type          String
+  status        String
+  amount        String
+  symbol        String
   fromAddress   String?
   toAddress     String?
   confirmations Int      @default(0)
   networkFee    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  // Relations
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@unique([txHash, symbol])
   @@map("transactions")
 }
 
 model Referral {
-  id              String   @id @default(cuid())
-  referrerId      String   // User who made the referral
-  referredUserId  String   // User who was referred
-  status          String   @default("PENDING") // PENDING, ACTIVE, COMPLETED
-  rewardAmount    String   @default("100") // USDT reward amount
-  isUnlocked      Boolean  @default(false)
-  requiredReferrals Int    @default(2) // Number of referrals needed to unlock
-  completedReferrals Int   @default(0) // Current count of completed referrals
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relations
-  referrer     User @relation("ReferrerToReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(cuid())
+  referrerId         String
+  referredUserId     String
+  status             String   @default("PENDING")
+  rewardAmount       String   @default("100")
+  isUnlocked         Boolean  @default(false)
+  requiredReferrals  Int      @default(2)
+  completedReferrals Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  referrer           User     @relation("ReferrerToReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
 
   @@unique([referrerId, referredUserId])
   @@map("referrals")
 }
 
 model LockedBalance {
-  id        String   @id @default(cuid())
-  userId    String
-  amount    String   // Amount locked (as string for precision)
-  currency  String   @default("USDT")
-  reason    String   // REFERRAL_BONUS, SIGNUP_BONUS, etc.
-  isLocked  Boolean  @default(true)
+  id         String    @id @default(cuid())
+  userId     String
+  amount     String
+  currency   String    @default("USDT")
+  reason     String
+  isLocked   Boolean   @default(true)
   unlockedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("locked_balances")
 }
 
 model ReferralDeposit {
   id            String   @id @default(cuid())
-  userId        String   // User who made deposit
-  referralId    String?  // Associated referral if applicable
-  transactionId String   // Link to transaction
-  amount        String   // Deposit amount
+  userId        String
+  referralId    String?
+  transactionId String
+  amount        String
   currency      String
-  isProcessed   Boolean  @default(false) // Whether this deposit was processed for referral unlock
+  isProcessed   Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -131,115 +118,105 @@ model ReferralDeposit {
 }
 
 model TradingPosition {
-  id             String   @id @default(cuid())
-  userId         String
-  type           String   // SPOT, FUTURES, COPY
-  symbol         String   // Trading pair like BTCUSDT
-  side           String   // BUY, SELL, LONG, SHORT
-  amount         String   // Position size
-  entryPrice     String   // Entry price
-  currentPrice   String?  // Current price
-  margin         String?  // For futures trading
-  leverage       Int?     // For futures trading
-  liquidationPrice String? // For futures trading
-  stopLoss       String?
-  takeProfit     String?
-  pnl            String   @default("0") // Profit and Loss
-  status         String   @default("OPEN") // OPEN, CLOSED, LIQUIDATED
-  openedAt       DateTime @default(now())
-  closedAt       DateTime?
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  userId           String
+  type             String
+  symbol           String
+  side             String
+  amount           String
+  entryPrice       String
+  currentPrice     String?
+  margin           String?
+  leverage         Int?
+  liquidationPrice String?
+  stopLoss         String?
+  takeProfit       String?
+  pnl              String    @default("0")
+  status           String    @default("OPEN")
+  openedAt         DateTime  @default(now())
+  closedAt         DateTime?
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("trading_positions")
 }
 
 model CopyTradingPosition {
-  id             String   @id @default(cuid())
-  userId         String   // Follower
-  traderId       String   // Trader being copied
-  traderName     String   // Name of trader being copied
-  copyAmount     String   // Amount allocated to copy this trader
-  profit         String   @default("0")
-  profitPercent  String   @default("0")
-  status         String   @default("ACTIVE") // ACTIVE, PAUSED, CLOSED
-  startedAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  proTrader ProTrader? @relation("ProTraderCopies", fields: [traderId], references: [id])
+  id            String    @id @default(cuid())
+  userId        String
+  traderId      String
+  traderName    String
+  copyAmount    String
+  profit        String    @default("0")
+  profitPercent String    @default("0")
+  status        String    @default("ACTIVE")
+  startedAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  proTrader     ProTrader @relation("ProTraderCopies", fields: [traderId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("copy_trading_positions")
 }
 
 model TradingOrder {
-  id          String   @id @default(cuid())
-  userId      String
-  symbol      String   // Trading pair
-  type        String   // MARKET, LIMIT, STOP
-  side        String   // BUY, SELL
-  amount      String   // Order amount
-  price       String?  // For limit orders
-  stopPrice   String?  // For stop orders
-  status      String   @default("PENDING") // PENDING, FILLED, CANCELLED, PARTIAL
-  filledAmount String  @default("0")
-  fees        String   @default("0")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String
+  symbol       String
+  type         String
+  side         String
+  amount       String
+  price        String?
+  stopPrice    String?
+  status       String   @default("PENDING")
+  filledAmount String   @default("0")
+  fees         String   @default("0")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("trading_orders")
 }
 
 model ProTrader {
-  id             String   @id @default(cuid())
-  name           String   @unique
-  email          String   @unique
-  avatar         String
-  verified       Boolean  @default(false)
-  followers      Int      @default(0)
-  totalReturn    String   // Percentage as string for precision
-  monthlyReturn  String   // Percentage as string for precision
-  winRate        String   // Percentage as string for precision
-  riskLevel      String   // Low, Medium, High
-  minCopyAmount  String   @default("50") // Minimum amount to copy trade
-  description    String
-  tradingPairs   String   // JSON array of trading pairs
-  joinedDate     DateTime @default(now())
-  isActive       Boolean  @default(true)
-  lastActiveAt   DateTime @default(now())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  trades        ProTraderTrade[]
+  id            String                @id @default(cuid())
+  name          String                @unique
+  email         String                @unique
+  avatar        String
+  verified      Boolean               @default(false)
+  followers     Int                   @default(0)
+  totalReturn   String
+  monthlyReturn String
+  winRate       String
+  riskLevel     String
+  minCopyAmount String                @default("50")
+  description   String
+  tradingPairs  String
+  joinedDate    DateTime              @default(now())
+  isActive      Boolean               @default(true)
+  lastActiveAt  DateTime              @default(now())
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
   copyPositions CopyTradingPosition[] @relation("ProTraderCopies")
+  trades        ProTraderTrade[]
 
   @@map("pro_traders")
 }
 
 model ProTraderTrade {
-  id        String   @id @default(cuid())
-  traderId  String
-  symbol    String
-  side      String   // BUY, SELL, LONG, SHORT
-  amount    String
-  entryPrice String
-  exitPrice  String?
-  profit     String   @default("0")
-  profitPercent String @default("0")
-  status     String   @default("OPEN") // OPEN, CLOSED
-  openedAt   DateTime @default(now())
-  closedAt   DateTime?
-  updatedAt  DateTime @updatedAt
-
-  // Relations
-  trader ProTrader @relation(fields: [traderId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  traderId      String
+  symbol        String
+  side          String
+  amount        String
+  entryPrice    String
+  exitPrice     String?
+  profit        String    @default("0")
+  profitPercent String    @default("0")
+  status        String    @default("OPEN")
+  openedAt      DateTime  @default(now())
+  closedAt      DateTime?
+  updatedAt     DateTime  @updatedAt
+  trader        ProTrader @relation(fields: [traderId], references: [id], onDelete: Cascade)
 
   @@map("pro_trader_trades")
 }
