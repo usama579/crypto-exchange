@@ -124,86 +124,75 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
 
     const amount = parseFloat(tradeAmount);
     const cryptoPrice = parseFloat(crypto.price);
+    const cryptoSymbol = crypto.symbol.replace('USDT', '').replace('BTC', '').replace('ETH', '');
+
+    const postWallet = async (walletId: string, amt: number, type: 'WITHDRAW' | 'DEPOSIT') => {
+      const res = await fetch('/api/wallet/balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletId, amount: amt.toString(), type })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Wallet update failed');
+      }
+      return res.json();
+    };
 
     try {
-      let updatePayload;
-
       if (tradeType === 'buy') {
-        // Buying crypto with USDT
         const totalCost = amount * cryptoPrice;
-        const usdtBalance = parseFloat(selectedWallet.balance);
-
-        if (totalCost > usdtBalance) {
+        if (totalCost > parseFloat(selectedWallet.balance)) {
           alert('Insufficient USDT balance');
           return;
         }
-
-        // Update USDT wallet (subtract)
-        updatePayload = {
-          walletId: selectedWallet.id,
-          amount: totalCost.toString(),
-          type: 'WITHDRAW'
-        };
+        // Deduct USDT
+        await postWallet(selectedWallet.id, totalCost, 'WITHDRAW');
+        // Add crypto to crypto wallet if it exists
+        const cryptoWallet = userWallets.find(w => w.symbol === cryptoSymbol);
+        if (cryptoWallet) {
+          await postWallet(cryptoWallet.id, amount, 'DEPOSIT');
+        }
       } else {
-        // Selling crypto for USDT
-        const cryptoBalance = parseFloat(selectedWallet.balance);
-
-        if (amount > cryptoBalance) {
+        if (amount > parseFloat(selectedWallet.balance)) {
           alert('Insufficient crypto balance');
           return;
         }
-
-        // Update crypto wallet (subtract)
-        updatePayload = {
-          walletId: selectedWallet.id,
-          amount: amount.toString(),
-          type: 'WITHDRAW'
-        };
+        // Deduct crypto
+        await postWallet(selectedWallet.id, amount, 'WITHDRAW');
+        // Add USDT to USDT wallet
+        const usdtWallet = userWallets.find(w => w.symbol === 'USDT');
+        if (usdtWallet) {
+          await postWallet(usdtWallet.id, amount * cryptoPrice, 'DEPOSIT');
+        }
       }
 
-      const response = await fetch('/api/wallet/balance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatePayload)
-      });
-
-      if (response.ok) {
-        // Success notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
-        notification.innerHTML = `
-          <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-            </svg>
-            <div>
-              <div class="font-medium">${tradeType.toUpperCase()} order completed!</div>
-              <div class="text-sm opacity-90">${amount} ${tradeType === 'buy' ? formatSymbol(crypto.symbol).split('/')[0] : 'USDT'}</div>
-            </div>
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform';
+      notification.innerHTML = `
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          <div>
+            <div class="font-medium">${tradeType.toUpperCase()} order completed!</div>
+            <div class="text-sm opacity-90">${amount} ${tradeType === 'buy' ? formatSymbol(crypto.symbol).split('/')[0] : 'USDT'}</div>
           </div>
-        `;
-
-        document.body.appendChild(notification);
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
         setTimeout(() => {
-          notification.style.transform = 'translateX(100%)';
-          setTimeout(() => {
-            if (document.body.contains(notification)) {
-              document.body.removeChild(notification);
-            }
-          }, 300);
-        }, 3000);
+          if (document.body.contains(notification)) document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
 
-        setShowTradeModal(false);
-        setTradeAmount('');
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Trade failed');
-      }
+      setShowTradeModal(false);
+      setTradeAmount('');
     } catch (error) {
       console.error('Trade error:', error);
-      alert('Trade failed. Please try again.');
+      alert(error instanceof Error ? error.message : 'Trade failed. Please try again.');
     }
   };
 

@@ -90,11 +90,11 @@ export default function About() {
       <div className="bg-gray-900 text-white rounded-lg p-8 mb-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
           <div>
-            <div className="text-3xl font-bold text-blue-400 mb-2">5M+</div>
+            <div className="text-3xl font-bold text-blue-400 mb-2">1M+</div>
             <div className="text-gray-300">Active Users</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-blue-400 mb-2">$50B+</div>
+            <div className="text-3xl font-bold text-blue-400 mb-2">$1B+</div>
             <div className="text-gray-300">Trading Volume</div>
           </div>
           <div>
@@ -113,7 +113,11 @@ export default function About() {
         <h2 className="text-3xl font-bold text-gray-900 mb-8">Our Team</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <img
+              src="https://api.dicebear.com/7.x/personas/svg?seed=JohnSmith&backgroundColor=b6e3f4"
+              alt="John Smith"
+              className="w-24 h-24 rounded-full mx-auto mb-4 object-cover bg-blue-100"
+            />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">John Smith</h3>
             <p className="text-gray-600 mb-2">CEO & Co-Founder</p>
             <p className="text-sm text-gray-600">
@@ -121,7 +125,11 @@ export default function About() {
             </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <img
+              src="https://api.dicebear.com/7.x/personas/svg?seed=SarahJohnson&backgroundColor=ffd5dc"
+              alt="Sarah Johnson"
+              className="w-24 h-24 rounded-full mx-auto mb-4 object-cover bg-pink-100"
+            />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Sarah Johnson</h3>
             <p className="text-gray-600 mb-2">CTO & Co-Founder</p>
             <p className="text-sm text-gray-600">
@@ -129,7 +137,11 @@ export default function About() {
             </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <img
+              src="https://api.dicebear.com/7.x/personas/svg?seed=MikeChen&backgroundColor=c0aede"
+              alt="Mike Chen"
+              className="w-24 h-24 rounded-full mx-auto mb-4 object-cover bg-purple-100"
+            />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Mike Chen</h3>
             <p className="text-gray-600 mb-2">Head of Security</p>
             <p className="text-sm text-gray-600">
@@ -146,9 +158,8 @@ export default function About() {
           Have questions? We'd love to hear from you.
         </p>
         <div className="space-y-2 text-sm text-gray-600">
-          <p>Email: support@cryptoexchange.com</p>
-          <p>Phone: +1 (555) 123-4567</p>
-          <p>Address: 123 Crypto Street, Blockchain City, BC 12345</p>
+          <p>Email: contact@cryptoexchange.com</p>
+          <p>Address: 4402 Tanner Street, Vancouver, British Columbia, V5B 2T4, Canada</p>
         </div>
       </div>
     </div>

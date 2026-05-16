@@ -69,10 +69,19 @@ export default function Blog() {
       date: "April 12, 2026",
       category: "Regulation",
       readTime: "6 min read"
+    },
+    {
+      id: 7,
+      title: "Copy Trading Explained: How to Profit by Following Expert Traders",
+      excerpt: "Discover how copy trading lets you automatically replicate the strategies of proven crypto traders, reduce learning curves, and build a diversified portfolio with minimal effort.",
+      author: "John Smith",
+      date: "May 10, 2026",
+      category: "Copy Trading",
+      readTime: "5 min read"
     }
   ];
 
-  const categories = ["All", "DeFi", "Bitcoin", "Security", "Analysis", "NFTs", "Regulation"];
+  const categories = ["All", "DeFi", "Bitcoin", "Security", "Analysis", "NFTs", "Regulation", "Copy Trading"];
 
   return (
     <div className="p-6">
