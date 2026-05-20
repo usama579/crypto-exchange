@@ -4,8 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { Wallet, Eye, EyeOff, Plus, ArrowUpDown, Send, Download, LogIn, X, Copy, QrCode, AlertCircle } from 'lucide-react';
 
+type USDTIconProps = { size?: number; className?: string };
+
 // USDT Icon Component - Official Tether Logo
-const USDTIcon = ({ size = 16, className = '' }) => (
+const USDTIcon = ({ size = 16, className = '' }: USDTIconProps) => (
   <div className={`inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -22,22 +24,24 @@ const USDTIcon = ({ size = 16, className = '' }) => (
   </div>
 );
 
+type CryptoIconProps = { symbol: string; size?: number };
+
 // Crypto Icon Component
-const CryptoIcon = ({ symbol, size = 32 }) => {
+const CryptoIcon = ({ symbol, size = 32 }: CryptoIconProps) => {
   if (symbol === 'USDT') {
     return <USDTIcon size={size} />;
   }
 
   // For other cryptos, return a colored circle with symbol
-  const getColorForSymbol = (sym) => {
-    const colors = {
-      'BTC': '#F7931A',
-      'ETH': '#627EEA',
-      'BNB': '#F3BA2F',
-      'ADA': '#0033AD',
-      'SOL': '#9945FF'
+  const getColorForSymbol = (sym: string) => {
+    const colors: Record<string, string> = {
+      BTC: '#F7931A',
+      ETH: '#627EEA',
+      BNB: '#F3BA2F',
+      ADA: '#0033AD',
+      SOL: '#9945FF',
     };
-    return colors[sym] || '#6B7280';
+    return colors[sym] ?? '#6B7280';
   };
 
   return (
