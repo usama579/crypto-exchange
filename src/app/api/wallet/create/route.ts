@@ -40,15 +40,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a mock deposit address (in production, use proper address generation)
-    const generateMockAddress = (symbol: string) => {
+    // Generate deposit address for the symbol
+    const getDepositAddress = (symbol: string) => {
       const addresses: { [key: string]: string } = {
-        'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-        'ETH': '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8',
-        'BNB': 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v',
-        'USDT': '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'
+        'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', // Bitcoin network
+        'ETH': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // ERC20 network
+        'BNB': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // BEP20 network
+        'USDT': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // ERC20/BEP20 network
+        'SOL': 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn', // Solana network
+        'POL': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // Polygon network
+        'TON': 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq', // TON network
+        'TRX': 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr' // TRC20 network
       };
-      return addresses[symbol] || `mock_address_${symbol}_${Date.now()}`;
+      return addresses[symbol] || `fallback_address_${symbol}_${Date.now()}`;
     };
 
     // Create new wallet
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         symbol: symbol.toUpperCase(),
         name,
-        address: generateMockAddress(symbol.toUpperCase()),
+        address: getDepositAddress(symbol.toUpperCase()),
         balance: '0'
       }
     });

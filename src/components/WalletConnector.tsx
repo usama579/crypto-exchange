@@ -22,13 +22,17 @@ export default function WalletConnector({ isOpen, onClose, selectedAsset }: Wall
   // Generate deposit address for selected asset
   useEffect(() => {
     if (selectedAsset && session) {
-      const mockAddresses = {
-        'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-        'ETH': '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8',
-        'BNB': 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v',
-        'USDT': '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'
+      const depositAddresses = {
+        'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', // Bitcoin network
+        'ETH': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // ERC20 network
+        'BNB': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // BEP20 network
+        'USDT': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // ERC20/BEP20 network
+        'SOL': 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn', // Solana network
+        'POL': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97', // Polygon network
+        'TON': 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq', // TON network
+        'TRX': 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr' // TRC20 network
       };
-      setDepositAddress(mockAddresses[selectedAsset.symbol as keyof typeof mockAddresses] || '');
+      setDepositAddress(depositAddresses[selectedAsset.symbol as keyof typeof depositAddresses] || '');
     }
   }, [selectedAsset, session]);
 

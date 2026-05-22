@@ -529,22 +529,33 @@ export default function WalletComponent() {
                     <div className="bg-white border border-blue-200 rounded-lg p-4 mb-4">
                       <div className="font-mono text-sm text-gray-800 break-all leading-relaxed">
                         {selectedAssetForDeposit?.symbol === 'BTC' && '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
-                        {selectedAssetForDeposit?.symbol === 'ETH' && '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'}
-                        {selectedAssetForDeposit?.symbol === 'BNB' && 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v'}
-                        {selectedAssetForDeposit?.symbol === 'USDT' && '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'}
+                        {selectedAssetForDeposit?.symbol === 'ETH' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
+                        {selectedAssetForDeposit?.symbol === 'BNB' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
+                        {selectedAssetForDeposit?.symbol === 'USDT' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
+                        {selectedAssetForDeposit?.symbol === 'SOL' && 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn'}
+                        {selectedAssetForDeposit?.symbol === 'POL' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
+                        {selectedAssetForDeposit?.symbol === 'TON' && 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq'}
+                        {selectedAssetForDeposit?.symbol === 'TRX' && 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr'}
                         {!selectedAssetForDeposit && '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
                       </div>
                     </div>
 
                     <button
                       onClick={() => {
-                        const addressToCopy = selectedAssetForDeposit?.symbol === 'BTC'
-                          ? '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
-                          : selectedAssetForDeposit?.symbol === 'BNB'
-                          ? 'bnb1grpf0955h0ykzuews8sqzkrsflf29z4xdz8y8v'
-                          : selectedAssetForDeposit?.symbol === 'ETH' || selectedAssetForDeposit?.symbol === 'USDT'
-                          ? '0x742d35Cc6636Cc1C99C3C3C0C8d4e3d3e5d5a7e8'
-                          : '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+                        const getDepositAddress = (symbol?: string) => {
+                          const addresses = {
+                            'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+                            'ETH': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
+                            'BNB': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
+                            'USDT': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
+                            'SOL': 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn',
+                            'POL': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
+                            'TON': 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq',
+                            'TRX': 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr'
+                          };
+                          return addresses[symbol as keyof typeof addresses] || '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+                        };
+                        const addressToCopy = getDepositAddress(selectedAssetForDeposit?.symbol);
 
                         navigator.clipboard.writeText(addressToCopy);
                         const notification = document.createElement('div');
