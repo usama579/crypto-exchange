@@ -1,8 +1,12 @@
-import sgMail from '@sendgrid/mail';
+import { BrevoClient } from '@getbrevo/brevo';
 
-// Initialize SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Initialize Brevo client
+let brevoClient: BrevoClient | null = null;
+
+if (process.env.BREVO_API_KEY) {
+  brevoClient = new BrevoClient({
+    apiKey: process.env.BREVO_API_KEY,
+  });
 }
 
 export interface SendEmailOptions {
@@ -15,23 +19,26 @@ export interface SendEmailOptions {
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<boolean> {
   try {
     console.log('Attempting to send email to:', to);
-    console.log('API Key configured:', !!process.env.SENDGRID_API_KEY);
+    console.log('API Key configured:', !!process.env.BREVO_API_KEY);
 
-    if (!process.env.SENDGRID_API_KEY) {
-      console.error('SendGrid API key not configured');
+    if (!process.env.BREVO_API_KEY || !brevoClient) {
+      console.error('Brevo API key not configured or client not initialized');
       return false;
     }
 
-    const msg = {
-      to,
-      from: `${process.env.EMAIL_FROM_NAME || 'CryptoExchange'} <${process.env.EMAIL_FROM_ADDRESS || 'noreply@example.com'}>`,
-      subject,
-      text,
-      html,
+    const emailData = {
+      to: [{ email: to }],
+      sender: {
+        name: process.env.EMAIL_FROM_NAME || 'CryptoExchange',
+        email: process.env.EMAIL_FROM_ADDRESS || 'noreply@example.com'
+      },
+      subject: subject,
+      htmlContent: html,
+      ...(text && { textContent: text })
     };
 
-    const result = await sgMail.send(msg);
-    console.log('Email sent successfully:', result[0].statusCode);
+    const result = await brevoClient.transactionalEmails.sendTransacEmail(emailData);
+    console.log('Email sent successfully:', result.messageId);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
