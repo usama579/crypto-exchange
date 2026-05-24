@@ -84,7 +84,39 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.isEmailVerified = user.isEmailVerified;
       }
+
+      // Refresh user data on session update trigger
+      if (trigger === 'update' && token.email) {
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              isEmailVerified: true,
+              referralCode: true,
+              createdAt: true
+            }
+          });
+
+          if (freshUser) {
+            token.id = freshUser.id;
+            token.firstName = freshUser.firstName;
+            token.lastName = freshUser.lastName;
+            token.isEmailVerified = freshUser.isEmailVerified;
+            token.name = `${freshUser.firstName} ${freshUser.lastName}`;
+          }
+        } catch (error) {
+          console.error('Failed to refresh user data:', error);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -92,6 +124,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
+        session.user.firstName = token.firstName as string;
+        session.user.lastName = token.lastName as string;
+        session.user.isEmailVerified = token.isEmailVerified as boolean;
       }
       return session;
     },

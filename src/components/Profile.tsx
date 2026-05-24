@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { User, Mail, Calendar, Key, Save, Edit3 } from 'lucide-react';
+import { User, Mail, Calendar, Key, Save, Edit3, Eye, EyeOff, X } from 'lucide-react';
 
 export default function Profile() {
   const { data: session, update } = useSession();
@@ -14,6 +14,25 @@ export default function Profile() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Change password modal state
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
+
+  // Resend verification state
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   useEffect(() => {
     if (session?.user) {
@@ -69,6 +88,144 @@ export default function Profile() {
       setMessage('An error occurred while updating profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    setPasswordMessage('');
+
+    // Validate passwords match
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage('New passwords do not match');
+      setPasswordLoading(false);
+      return;
+    }
+
+    // Validate password strength
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordMessage('New password must be at least 8 characters long');
+      setPasswordLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPasswordMessage('Password changed successfully!');
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          setShowChangePassword(false);
+          setPasswordMessage('');
+        }, 2000);
+      } else {
+        setPasswordMessage(data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      setPasswordMessage('An error occurred while changing password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendMessage('');
+
+    try {
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: session?.user?.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setResendMessage('Verification email sent successfully!');
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          setResendMessage('');
+        }, 5000);
+      } else {
+        setResendMessage(data.message || 'Failed to send verification email');
+      }
+    } catch (error) {
+      setResendMessage('An error occurred while sending verification email');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const refreshUserSession = async () => {
+    try {
+      // Get fresh user data from the database
+      const response = await fetch('/api/auth/refresh-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Update the session with fresh data
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            ...data.user
+          }
+        });
+
+        // Show success message if verification status changed
+        if (data.user.isEmailVerified && !session?.user?.isEmailVerified) {
+          setResendMessage('Email verification status updated!');
+          setTimeout(() => {
+            setResendMessage('');
+          }, 3000);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh session:', error);
     }
   };
 
@@ -251,6 +408,35 @@ export default function Profile() {
       {/* Account Security */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-6">Account Security</h2>
+
+        {resendMessage && (
+          <div className={`p-4 rounded-lg mb-4 ${
+            resendMessage.includes('success')
+              ? 'bg-green-100 text-green-700 border border-green-200'
+              : 'bg-red-100 text-red-700 border border-red-200'
+          }`}>
+            {resendMessage}
+          </div>
+        )}
+
+        {!session.user.isEmailVerified && (
+          <div className="mb-4 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-800">
+                  If you've already verified your email, click refresh to update your status.
+                </p>
+              </div>
+              <button
+                onClick={refreshUserSession}
+                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center">
@@ -260,7 +446,10 @@ export default function Profile() {
                 <p className="text-sm text-gray-600">Last changed: Not available</p>
               </div>
             </div>
-            <button className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
               Change Password
             </button>
           </div>
@@ -275,13 +464,160 @@ export default function Profile() {
               </div>
             </div>
             {!session.user.isEmailVerified && (
-              <button className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                Resend Verification
+              <button
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {resendLoading ? 'Sending...' : 'Resend Verification'}
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Change Password</h3>
+                <button
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setPasswordForm({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: ''
+                    });
+                    setPasswordMessage('');
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {passwordMessage && (
+                <div className={`p-4 rounded-lg mb-6 ${
+                  passwordMessage.includes('success')
+                    ? 'bg-green-100 text-green-700 border border-green-200'
+                    : 'bg-red-100 text-red-700 border border-red-200'
+                }`}>
+                  {passwordMessage}
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.current ? 'text' : 'password'}
+                      id="currentPassword"
+                      name="currentPassword"
+                      value={passwordForm.currentPassword}
+                      onChange={handlePasswordInputChange}
+                      className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('current')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-700"
+                    >
+                      {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.new ? 'text' : 'password'}
+                      id="newPassword"
+                      name="newPassword"
+                      value={passwordForm.newPassword}
+                      onChange={handlePasswordInputChange}
+                      className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('new')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-700"
+                    >
+                      {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.confirm ? 'text' : 'password'}
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      value={passwordForm.confirmPassword}
+                      onChange={handlePasswordInputChange}
+                      className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('confirm')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-700"
+                    >
+                      {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Password must be at least 8 characters long</li>
+                    <li>New password must be different from current password</li>
+                  </ul>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowChangePassword(false);
+                      setPasswordForm({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                      });
+                      setPasswordMessage('');
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {passwordLoading ? 'Changing...' : 'Change Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

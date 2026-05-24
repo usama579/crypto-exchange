@@ -18,6 +18,8 @@ model User {
   isEmailVerified               Boolean               @default(false)
   emailVerificationToken        String?               @unique
   emailVerificationTokenExpires DateTime?
+  passwordResetToken            String?               @unique
+  passwordResetTokenExpires     DateTime?
   createdAt                     DateTime              @default(now())
   updatedAt                     DateTime              @updatedAt
   copyTradingPositions          CopyTradingPosition[]
