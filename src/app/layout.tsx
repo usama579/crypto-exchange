@@ -14,9 +14,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteTitle = "Coindexy - Professional Crypto Trading Platform";
+const siteDescription =
+  "Trade cryptocurrencies with confidence on Coindexy. Professional trading tools, secure wallet management, and real-time market data.";
+
 export const metadata: Metadata = {
-  title: "Coindexy - Professional Crypto Trading Platform",
-  description: "Trade cryptocurrencies with confidence on Coindexy. Professional trading tools, secure wallet management, and real-time market data.",
+  metadataBase: new URL("https://coindexy.com"),
+  title: siteTitle,
+  description: siteDescription,
+  applicationName: "Coindexy",
+  openGraph: {
+    type: "website",
+    url: "https://coindexy.com",
+    siteName: "Coindexy",
+    title: siteTitle,
+    description: siteDescription,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({
