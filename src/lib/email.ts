@@ -47,7 +47,8 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
 }
 
 export async function sendVerificationEmail(email: string, verificationToken: string): Promise<boolean> {
-  const verificationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${verificationToken}`;
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
 
   const subject = 'Verify your email address - CryptoExchange';
 
@@ -62,7 +63,7 @@ export async function sendVerificationEmail(email: string, verificationToken: st
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
         .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .header { text-align: center; margin-bottom: 40px; }
-        .logo { color: #2563eb; font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+        .logo { color: #1f2937; font-size: 24px; font-weight: bold; margin-top: 12px; }
         .title { color: #1f2937; font-size: 24px; font-weight: 600; margin-bottom: 20px; }
         .message { color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 30px; }
         .button { display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
@@ -74,7 +75,8 @@ export async function sendVerificationEmail(email: string, verificationToken: st
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">🚀 CryptoExchange</div>
+          <img src="${baseUrl}/logo.png" alt="CryptoExchange" width="64" height="64" style="display:block;margin:0 auto;border-radius:12px;" />
+          <div class="logo">CryptoExchange</div>
         </div>
 
         <h1 class="title">Verify Your Email Address</h1>

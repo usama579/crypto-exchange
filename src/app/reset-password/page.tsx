@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, Lock, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock, CheckCircle, XCircle } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState('');
@@ -98,10 +99,7 @@ function ResetPasswordForm() {
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center items-center mb-6">
-            <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-              <TrendingUp size={32} />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+            <Logo size={48} textClassName="text-3xl" />
           </div>
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <div className="text-center">
@@ -120,10 +118,7 @@ function ResetPasswordForm() {
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center items-center mb-6">
-            <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-              <TrendingUp size={32} />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+            <Logo size={48} textClassName="text-3xl" />
           </div>
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <div className="text-center">
@@ -153,10 +148,7 @@ function ResetPasswordForm() {
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center items-center mb-6">
-            <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-              <TrendingUp size={32} />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+            <Logo size={48} textClassName="text-3xl" />
           </div>
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <div className="text-center">
@@ -191,10 +183,7 @@ function ResetPasswordForm() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center items-center mb-6">
-          <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-            <TrendingUp size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+          <Logo size={48} textClassName="text-3xl" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Reset your password
@@ -311,10 +300,7 @@ function LoadingPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center items-center mb-6">
-          <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-            <TrendingUp size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+          <Logo size={48} textClassName="text-3xl" />
         </div>
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="text-center">

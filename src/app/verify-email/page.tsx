@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, XCircle, Mail, TrendingUp, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Mail, Loader2 } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 function VerifyEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'waiting'>('loading');
@@ -88,10 +89,7 @@ function VerifyEmailContent() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center items-center mb-6">
-          <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-            <TrendingUp size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+          <Logo size={48} textClassName="text-3xl" />
         </div>
 
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">

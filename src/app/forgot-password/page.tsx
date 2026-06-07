@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, TrendingUp, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -42,10 +43,7 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center items-center mb-6">
-            <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-              <TrendingUp size={32} />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+            <Logo size={48} textClassName="text-3xl" />
           </div>
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <div className="text-center">
@@ -87,10 +85,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center items-center mb-6">
-          <div className="bg-blue-600 text-white p-3 rounded-lg mr-3">
-            <TrendingUp size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">CryptoExchange</h1>
+          <Logo size={48} textClassName="text-3xl" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Forgot your password?
