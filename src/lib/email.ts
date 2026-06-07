@@ -29,7 +29,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     const emailData = {
       to: [{ email: to }],
       sender: {
-        name: process.env.EMAIL_FROM_NAME || 'CryptoExchange',
+        name: process.env.EMAIL_FROM_NAME || 'Coindexy',
         email: process.env.EMAIL_FROM_ADDRESS || 'noreply@example.com'
       },
       subject: subject,
@@ -50,7 +50,7 @@ export async function sendVerificationEmail(email: string, verificationToken: st
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
 
-  const subject = 'Verify your email address - CryptoExchange';
+  const subject = 'Verify your email address - Coindexy';
 
   const html = `
     <!DOCTYPE html>
@@ -75,14 +75,14 @@ export async function sendVerificationEmail(email: string, verificationToken: st
     <body>
       <div class="container">
         <div class="header">
-          <img src="${baseUrl}/logo.png" alt="CryptoExchange" width="64" height="64" style="display:block;margin:0 auto;border-radius:12px;" />
-          <div class="logo">CryptoExchange</div>
+          <img src="${baseUrl}/logo.png" alt="Coindexy" width="64" height="64" style="display:block;margin:0 auto;border-radius:12px;" />
+          <div class="logo">Coindexy</div>
         </div>
 
         <h1 class="title">Verify Your Email Address</h1>
 
         <p class="message">
-          Thank you for signing up with CryptoExchange! To complete your registration and start trading,
+          Thank you for signing up with Coindexy! To complete your registration and start trading,
           please verify your email address by clicking the button below.
         </p>
 
@@ -97,11 +97,11 @@ export async function sendVerificationEmail(email: string, verificationToken: st
         </p>
 
         <div class="warning">
-          <strong>Important:</strong> This verification link will expire in 24 hours. If you didn't create an account with CryptoExchange, please ignore this email.
+          <strong>Important:</strong> This verification link will expire in 24 hours. If you didn't create an account with Coindexy, please ignore this email.
         </div>
 
         <div class="footer">
-          <p>© 2026 CryptoExchange. All rights reserved.</p>
+          <p>© 2026 Coindexy. All rights reserved.</p>
           <p>This email was sent to ${email}</p>
         </div>
       </div>
@@ -110,18 +110,18 @@ export async function sendVerificationEmail(email: string, verificationToken: st
   `;
 
   const text = `
-    Verify Your Email Address - CryptoExchange
+    Verify Your Email Address - Coindexy
 
-    Thank you for signing up with CryptoExchange!
+    Thank you for signing up with Coindexy!
 
     To complete your registration, please verify your email address by visiting:
     ${verificationUrl}
 
     This verification link will expire in 24 hours.
 
-    If you didn't create an account with CryptoExchange, please ignore this email.
+    If you didn't create an account with Coindexy, please ignore this email.
 
-    © 2026 CryptoExchange
+    © 2026 Coindexy
   `;
 
   return await sendEmail({

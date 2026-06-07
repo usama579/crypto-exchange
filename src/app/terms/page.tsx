@@ -85,7 +85,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-4">10. Contact Information</h2>
               <p>
-                If you have any questions about these Terms and Conditions, please contact us at support@cryptoexchange.com
+                If you have any questions about these Terms and Conditions, please contact us at support@coindexy.com
               </p>
             </section>
           </div>

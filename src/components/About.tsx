@@ -41,7 +41,7 @@ export default function About() {
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          About CryptoExchange
+          About Coindexy
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
           The world's leading cryptocurrency exchange platform, offering secure, fast,
@@ -158,7 +158,7 @@ export default function About() {
           Have questions? We'd love to hear from you.
         </p>
         <div className="space-y-2 text-sm text-gray-600">
-          <p>Email: contact@cryptoexchange.com</p>
+          <p>Email: contact@coindexy.com</p>
           <p>Address: 4402 Tanner Street, Vancouver, British Columbia, V5B 2T4, Canada</p>
         </div>
       </div>

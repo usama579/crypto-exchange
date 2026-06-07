@@ -135,7 +135,7 @@ export default function Privacy() {
                 If you have questions about this privacy policy or our data practices, please contact us at:
               </p>
               <div className="mt-2">
-                <p>Email: privacy@cryptoexchange.com</p>
+                <p>Email: privacy@coindexy.com</p>
                 <p>Address: [Your Company Address]</p>
               </div>
             </section>

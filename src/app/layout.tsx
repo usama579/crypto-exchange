@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CryptoExchange - Professional Crypto Trading Platform",
-  description: "Trade cryptocurrencies with confidence on CryptoExchange. Professional trading tools, secure wallet management, and real-time market data.",
+  title: "Coindexy - Professional Crypto Trading Platform",
+  description: "Trade cryptocurrencies with confidence on Coindexy. Professional trading tools, secure wallet management, and real-time market data.",
 };
 
 export default function RootLayout({

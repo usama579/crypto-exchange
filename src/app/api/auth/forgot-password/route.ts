@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
-    const subject = 'Reset your password - CryptoExchange';
+    const subject = 'Reset your password - Coindexy';
 
     const html = `
       <!DOCTYPE html>
@@ -68,14 +68,14 @@ export async function POST(req: NextRequest) {
       <body>
         <div class="container">
           <div class="header">
-            <img src="${baseUrl}/logo.png" alt="CryptoExchange" width="64" height="64" style="display:block;margin:0 auto;border-radius:12px;" />
-            <div class="logo">CryptoExchange</div>
+            <img src="${baseUrl}/logo.png" alt="Coindexy" width="64" height="64" style="display:block;margin:0 auto;border-radius:12px;" />
+            <div class="logo">Coindexy</div>
           </div>
 
           <h1 class="title">Reset Your Password</h1>
 
           <p class="message">
-            We received a request to reset your password for your CryptoExchange account.
+            We received a request to reset your password for your Coindexy account.
             If you made this request, click the button below to reset your password.
           </p>
 
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
           </div>
 
           <div class="footer">
-            <p>© 2026 CryptoExchange. All rights reserved.</p>
+            <p>© 2026 Coindexy. All rights reserved.</p>
             <p>This email was sent to ${email}</p>
           </div>
         </div>
@@ -103,9 +103,9 @@ export async function POST(req: NextRequest) {
     `;
 
     const text = `
-      Reset Your Password - CryptoExchange
+      Reset Your Password - Coindexy
 
-      We received a request to reset your password for your CryptoExchange account.
+      We received a request to reset your password for your Coindexy account.
 
       To reset your password, please visit:
       ${resetUrl}
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
 
       If you didn't request a password reset, please ignore this email.
 
-      © 2026 CryptoExchange
+      © 2026 Coindexy
     `;
 
     const emailSent = await sendEmail({

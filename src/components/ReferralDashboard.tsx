@@ -60,7 +60,7 @@ export default function ReferralDashboard() {
 
     if (navigator.share) {
       navigator.share({
-        title: 'Crypto Exchange Referral',
+        title: 'Coindexy Referral',
         text,
         url: referralUrl,
       });

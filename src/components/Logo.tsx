@@ -5,7 +5,7 @@ interface LogoProps {
   size?: number;
   /** Tailwind classes controlling the brand text size/weight. */
   textClassName?: string;
-  /** Hide the "CryptoExchange" wordmark and render the mark only. */
+  /** Hide the "Coindexy" wordmark and render the mark only. */
   showText?: boolean;
   className?: string;
 }
@@ -20,7 +20,7 @@ export default function Logo({
     <div className={`flex items-center ${className}`}>
       <Image
         src="/logo.png"
-        alt="CryptoExchange logo"
+        alt="Coindexy logo"
         width={size}
         height={size}
         priority
@@ -28,7 +28,7 @@ export default function Logo({
       />
       {showText && (
         <h1 className={`font-bold text-gray-900 ${textClassName}`}>
-          CryptoExchange
+          Coindexy
         </h1>
       )}
     </div>
