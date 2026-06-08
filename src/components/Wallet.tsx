@@ -70,6 +70,19 @@ interface Asset {
   balance: string;
 }
 
+interface TransactionItem {
+  id: string;
+  type: string;
+  status: string;
+  amount: string;
+  symbol: string;
+  txHash: string | null;
+  fromAddress: string | null;
+  toAddress: string | null;
+  confirmations: number;
+  createdAt: string;
+}
+
 interface DepositNetwork {
   id: string;
   symbol: string;        // symbol passed to the QR generator
@@ -107,6 +120,8 @@ export default function WalletComponent() {
   const [twoFACode, setTwoFACode] = useState('');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
+  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
 
   // Ensure live prices are loaded into the store
   useEffect(() => {
@@ -148,6 +163,69 @@ export default function WalletComponent() {
 
     fetchWalletData();
   }, [session]);
+
+  // Fetch transaction history for the signed-in user
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!session?.user?.id) {
+        setIsLoadingTransactions(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/wallet/transactions');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) setTransactions(data.transactions as TransactionItem[]);
+        } else {
+          console.error('Failed to fetch transactions');
+        }
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setIsLoadingTransactions(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [session]);
+
+  // Presentation helpers for transaction rows
+  const formatTxDate = (iso: string) =>
+    new Date(iso).toLocaleString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+
+  const formatTxAmount = (amount: string) =>
+    parseFloat(amount).toLocaleString('en-US', { maximumFractionDigits: 8 });
+
+  const txMeta = (type: string) => {
+    switch (type) {
+      case 'DEPOSIT':
+        return { label: 'Deposit', sign: '+', color: 'text-green-600', Icon: Download };
+      case 'WITHDRAW':
+      case 'WITHDRAWAL':
+        return { label: 'Withdrawal', sign: '-', color: 'text-red-600', Icon: Send };
+      default:
+        return {
+          label: type.charAt(0) + type.slice(1).toLowerCase(),
+          sign: '',
+          color: 'text-gray-700',
+          Icon: ArrowUpDown,
+        };
+    }
+  };
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      COMPLETED: 'bg-green-100 text-green-800',
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      CONFIRMING: 'bg-blue-100 text-blue-800',
+      FAILED: 'bg-red-100 text-red-800',
+      CANCELLED: 'bg-gray-100 text-gray-800',
+    };
+    return map[status] || 'bg-gray-100 text-gray-800';
+  };
 
   // Resolve live USD price for a wallet symbol using the Binance price store
   const getLivePrice = (symbol: string): number => {
@@ -431,10 +509,49 @@ export default function WalletComponent() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">Recent Activity</h3>
             <div className="space-y-4">
-              <div className="text-center text-gray-500 py-8">
-                <div className="text-sm">No recent transactions</div>
-                <div className="text-xs text-gray-600 mt-1">Your transaction history will appear here</div>
-              </div>
+              {isLoadingTransactions ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 animate-pulse"></div>
+                      <div>
+                        <div className="h-4 bg-gray-200 rounded w-20 mb-1 animate-pulse"></div>
+                        <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                  </div>
+                ))
+              ) : transactions.length > 0 ? (
+                transactions.slice(0, 5).map((tx) => {
+                  const meta = txMeta(tx.type);
+                  const Icon = meta.Icon;
+                  return (
+                    <div key={tx.id} className="flex items-center justify-between">
+                      <div className="flex items-center min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3 flex-shrink-0">
+                          <Icon size={16} className={meta.color} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 text-sm">{meta.label}</div>
+                          <div className="text-xs text-gray-500">{formatTxDate(tx.createdAt)}</div>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <div className={`font-medium text-sm ${meta.color}`}>
+                          {meta.sign}{formatTxAmount(tx.amount)} {tx.symbol}
+                        </div>
+                        <div className="text-xs text-gray-500">{tx.status}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="text-sm">No recent transactions</div>
+                  <div className="text-xs text-gray-600 mt-1">Your transaction history will appear here</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -455,27 +572,75 @@ export default function WalletComponent() {
               </button>
             </div>
           </div>
-          <div className="p-8 text-center text-gray-500">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ArrowUpDown size={24} className="text-gray-500" />
+          {isLoadingTransactions ? (
+            <div className="divide-y divide-gray-200">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between p-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full mr-3 animate-pulse"></div>
+                    <div>
+                      <div className="h-4 bg-gray-200 rounded w-24 mb-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                </div>
+              ))}
             </div>
-            <div className="text-lg font-medium mb-2">No transactions yet</div>
-            <div className="text-sm text-gray-600 mb-4">Your transaction history will appear here once you start trading</div>
-            <div className="flex space-x-3 justify-center">
-              <button
-                onClick={() => { if (blockIfIncomplete()) return; setShowDepositModal(true); }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Make a Deposit
-              </button>
-              <button
-                onClick={() => window.location.href = '/trading'}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                Start Trading
-              </button>
+          ) : transactions.length > 0 ? (
+            <div className="divide-y divide-gray-200">
+              {transactions.map((tx) => {
+                const meta = txMeta(tx.type);
+                const Icon = meta.Icon;
+                return (
+                  <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-gray-50">
+                    <div className="flex items-center min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-3 flex-shrink-0">
+                        <Icon size={18} className={meta.color} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900">{meta.label} {tx.symbol}</div>
+                        <div className="text-xs text-gray-500">{formatTxDate(tx.createdAt)}</div>
+                        {tx.txHash && (
+                          <div className="text-xs text-gray-400 font-mono truncate max-w-[200px] sm:max-w-xs">{tx.txHash}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-3">
+                      <div className={`font-semibold ${meta.color}`}>
+                        {meta.sign}{formatTxAmount(tx.amount)} {tx.symbol}
+                      </div>
+                      <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${statusBadge(tx.status)}`}>
+                        {tx.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ArrowUpDown size={24} className="text-gray-500" />
+              </div>
+              <div className="text-lg font-medium mb-2">No transactions yet</div>
+              <div className="text-sm text-gray-600 mb-4">Your transaction history will appear here once you start trading</div>
+              <div className="flex space-x-3 justify-center">
+                <button
+                  onClick={() => { if (blockIfIncomplete()) return; setShowDepositModal(true); }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Make a Deposit
+                </button>
+                <button
+                  onClick={() => window.location.href = '/trading'}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Start Trading
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
