@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { User, Mail, Calendar, Key, Save, Edit3, Eye, EyeOff, X } from 'lucide-react';
+import { User, Mail, Calendar, Key, Save, Edit3, Eye, EyeOff, X, Phone, Upload, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export default function Profile() {
   const { data: session, update } = useSession();
@@ -33,6 +33,82 @@ export default function Profile() {
   // Resend verification state
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+
+  // KYC / profile completion state
+  const [kycForm, setKycForm] = useState({
+    mobileNumber: '',
+    idCardFront: '', // base64 data URL
+    idCardBack: '',  // base64 data URL
+  });
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycMessage, setKycMessage] = useState('');
+  const isProfileCompleted = !!session?.user?.isProfileCompleted;
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleIdUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    side: 'idCardFront' | 'idCardBack'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setKycMessage('Please upload an image file (JPG, PNG or WebP).');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setKycMessage('Image is too large. Please upload a file under 3MB.');
+      return;
+    }
+    try {
+      const base64 = await fileToBase64(file);
+      setKycForm(prev => ({ ...prev, [side]: base64 }));
+      setKycMessage('');
+    } catch {
+      setKycMessage('Failed to read the image. Please try again.');
+    }
+  };
+
+  const handleKycSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setKycMessage('');
+
+    if (!/^\+?\d{7,15}$/.test(kycForm.mobileNumber.trim())) {
+      setKycMessage('Please enter a valid mobile number (7–15 digits).');
+      return;
+    }
+    if (!kycForm.idCardFront || !kycForm.idCardBack) {
+      setKycMessage('Please upload both the front and back of your ID card.');
+      return;
+    }
+
+    setKycLoading(true);
+    try {
+      const response = await fetch('/api/user/kyc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(kycForm),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setKycMessage('Profile completed successfully! Full access unlocked.');
+        await refreshUserSession();
+      } else {
+        setKycMessage(data.error || 'Failed to submit profile details.');
+      }
+    } catch {
+      setKycMessage('An error occurred while submitting your details.');
+    } finally {
+      setKycLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (session?.user) {
@@ -265,6 +341,117 @@ export default function Profile() {
             {isEditing ? 'Cancel' : 'Edit Profile'}
           </button>
         </div>
+      </div>
+
+      {/* Identity Verification (KYC) */}
+      <div className={`bg-white rounded-lg shadow-md p-6 border-2 ${
+        isProfileCompleted ? 'border-green-200' : 'border-amber-300'
+      }`}>
+        <div className="flex items-center mb-4">
+          <ShieldCheck size={24} className={isProfileCompleted ? 'text-green-600' : 'text-amber-600'} />
+          <h2 className="text-xl font-bold text-gray-900 ml-2">Identity Verification</h2>
+          {isProfileCompleted && (
+            <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <CheckCircle2 size={14} className="mr-1" /> Completed
+            </span>
+          )}
+        </div>
+
+        {isProfileCompleted ? (
+          <div className="space-y-3">
+            <p className="text-gray-600">
+              Your profile is verified. You have full access to deposits, withdrawals and trading.
+            </p>
+            {session.user.mobileNumber && (
+              <div className="flex items-center">
+                <Phone size={20} className="text-gray-500 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-600">Mobile Number</p>
+                  <p className="font-medium">{session.user.mobileNumber}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              Until you complete verification you can browse the app, but
+              <strong> deposits, withdrawals and trading are locked.</strong> Provide your
+              mobile number and a photo of the front and back of your ID card to unlock full access.
+            </div>
+
+            {kycMessage && (
+              <div className={`p-4 rounded-lg mb-4 ${
+                kycMessage.includes('success')
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-red-100 text-red-700 border border-red-200'
+              }`}>
+                {kycMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleKycSubmit} className="space-y-5">
+              <div>
+                <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                  Mobile Number
+                </label>
+                <div className="relative">
+                  <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="tel"
+                    id="mobileNumber"
+                    name="mobileNumber"
+                    value={kycForm.mobileNumber}
+                    onChange={(e) => setKycForm(prev => ({ ...prev, mobileNumber: e.target.value }))}
+                    placeholder="+1234567890"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {([
+                  { key: 'idCardFront', label: 'ID Card — Front' },
+                  { key: 'idCardBack', label: 'ID Card — Back' },
+                ] as const).map(({ key, label }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+                    <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors overflow-hidden">
+                      {kycForm[key] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={kycForm[key]} alt={label} className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="flex flex-col items-center text-gray-500">
+                          <Upload size={24} />
+                          <span className="mt-2 text-sm">Click to upload</span>
+                          <span className="text-xs text-gray-400">JPG, PNG or WebP (max 3MB)</span>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleIdUpload(e, key)}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={kycLoading}
+                  className="flex items-center px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+                >
+                  <ShieldCheck size={18} className="mr-2" />
+                  {kycLoading ? 'Submitting...' : 'Submit & Unlock Full Access'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
 
       {/* Profile Information */}

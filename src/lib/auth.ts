@@ -51,6 +51,8 @@ export const authOptions: NextAuthOptions = {
             firstName: user.firstName,
             lastName: user.lastName,
             isEmailVerified: user.isEmailVerified,
+            isProfileCompleted: user.isProfileCompleted,
+            mobileNumber: user.mobileNumber,
           };
         } catch (error) {
           console.error('Authentication error:', error);
@@ -87,6 +89,8 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.isEmailVerified = user.isEmailVerified;
+        token.isProfileCompleted = user.isProfileCompleted;
+        token.mobileNumber = user.mobileNumber;
       }
 
       // Refresh user data on session update trigger
@@ -100,6 +104,8 @@ export const authOptions: NextAuthOptions = {
               firstName: true,
               lastName: true,
               isEmailVerified: true,
+              isProfileCompleted: true,
+              mobileNumber: true,
               referralCode: true,
               createdAt: true
             }
@@ -110,6 +116,8 @@ export const authOptions: NextAuthOptions = {
             token.firstName = freshUser.firstName;
             token.lastName = freshUser.lastName;
             token.isEmailVerified = freshUser.isEmailVerified;
+            token.isProfileCompleted = freshUser.isProfileCompleted;
+            token.mobileNumber = freshUser.mobileNumber;
             token.name = `${freshUser.firstName} ${freshUser.lastName}`;
           }
         } catch (error) {
@@ -127,6 +135,8 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
+        session.user.isProfileCompleted = token.isProfileCompleted as boolean;
+        session.user.mobileNumber = token.mobileNumber as string | null;
       }
       return session;
     },

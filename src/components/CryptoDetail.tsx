@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, Calendar, Volume2, ShoppingCart, DollarSign, Wallet, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
+import { useKycGate } from '@/hooks/useKycGate';
 
 interface CryptoDetailProps {
   crypto: any;
@@ -25,6 +26,7 @@ interface UserWallet {
 
 export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
   const { data: session } = useSession();
+  const { blockIfIncomplete } = useKycGate();
   const [timeRange, setTimeRange] = useState('24h');
   const [chartType, setChartType] = useState<'line' | 'area' | 'candlestick'>('area');
   const [chartData, setChartData] = useState<ChartData[]>([]);
@@ -120,6 +122,7 @@ export default function CryptoDetail({ crypto, onBack }: CryptoDetailProps) {
   }, [showTradeModal, session, crypto.symbol, tradeType]);
 
   const handleTrade = async () => {
+    if (blockIfIncomplete()) return;
     if (!selectedWallet || !tradeAmount || !session?.user?.id) return;
 
     const amount = parseFloat(tradeAmount);

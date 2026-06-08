@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
         firstName: true,
         lastName: true,
         isEmailVerified: true,
+        isProfileCompleted: true,
+        mobileNumber: true,
         referralCode: true,
         createdAt: true
       }
@@ -45,6 +47,8 @@ export async function POST(req: NextRequest) {
           lastName: user.lastName,
           name: `${user.firstName} ${user.lastName}`,
           isEmailVerified: user.isEmailVerified,
+          isProfileCompleted: user.isProfileCompleted,
+          mobileNumber: user.mobileNumber,
           referralCode: user.referralCode,
           createdAt: user.createdAt?.toISOString()
         }

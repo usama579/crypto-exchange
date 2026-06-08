@@ -20,6 +20,10 @@ model User {
   emailVerificationTokenExpires DateTime?
   passwordResetToken            String?               @unique
   passwordResetTokenExpires     DateTime?
+  mobileNumber                  String?
+  idCardFront                   String?
+  idCardBack                    String?
+  isProfileCompleted            Boolean               @default(false)
   createdAt                     DateTime              @default(now())
   updatedAt                     DateTime              @updatedAt
   copyTradingPositions          CopyTradingPosition[]

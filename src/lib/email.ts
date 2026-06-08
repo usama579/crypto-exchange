@@ -1,4 +1,5 @@
 import { BrevoClient } from '@getbrevo/brevo';
+import { getAppBaseUrl } from './url';
 
 // Initialize Brevo client
 let brevoClient: BrevoClient | null = null;
@@ -47,7 +48,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
 }
 
 export async function sendVerificationEmail(email: string, verificationToken: string): Promise<boolean> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const baseUrl = getAppBaseUrl();
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
 
   const subject = 'Verify your email address - Coindexy';

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
+import { isProfileCompleted, PROFILE_INCOMPLETE_MESSAGE } from '@/lib/requireProfile';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,11 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Withdrawals and trade-driven balance changes require a completed profile.
+    if (!(await isProfileCompleted(session.user.id))) {
+      return NextResponse.json({ success: false, error: PROFILE_INCOMPLETE_MESSAGE }, { status: 403 });
     }
 
     const body = await request.json();

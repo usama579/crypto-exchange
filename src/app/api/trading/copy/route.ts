@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { TradingService, createCopyTradeSchema } from '@/lib/trading';
 import { rateLimit } from '@/lib/rate-limiter';
+import { isProfileCompleted, PROFILE_INCOMPLETE_MESSAGE } from '@/lib/requireProfile';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!(await isProfileCompleted(session.user.id))) {
+      return NextResponse.json({ error: PROFILE_INCOMPLETE_MESSAGE }, { status: 403 });
     }
 
     const body = await request.json();

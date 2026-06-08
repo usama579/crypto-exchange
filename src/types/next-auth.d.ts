@@ -10,6 +10,8 @@ declare module "next-auth" {
       firstName?: string
       lastName?: string
       isEmailVerified?: boolean
+      isProfileCompleted?: boolean
+      mobileNumber?: string | null
       referralCode?: string
       createdAt?: string
     }
@@ -23,6 +25,8 @@ declare module "next-auth" {
     firstName?: string
     lastName?: string
     isEmailVerified?: boolean
+    isProfileCompleted?: boolean
+    mobileNumber?: string | null
     referralCode?: string
     createdAt?: string
   }

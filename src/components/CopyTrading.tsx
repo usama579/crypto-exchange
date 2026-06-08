@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useKycGate } from '@/hooks/useKycGate';
 import { Users, TrendingUp, TrendingDown, Star, Copy, UserPlus, DollarSign, Activity, Trophy, X, LogIn, AlertCircle } from 'lucide-react';
 
 interface Trader {
@@ -44,6 +45,7 @@ interface CopyPosition {
 
 export default function CopyTrading() {
   const { data: session } = useSession();
+  const { blockIfIncomplete } = useKycGate();
   const [selectedTrader, setSelectedTrader] = useState<Trader | null>(null);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [copyAmount, setCopyAmount] = useState('');
@@ -87,6 +89,7 @@ export default function CopyTrading() {
   }, [session, searchTerm, filterBy]);
 
   const handleCopyTrader = async () => {
+    if (blockIfIncomplete()) return;
     if (!selectedTrader || !copyAmount || !session?.user?.id) return;
 
     const amount = parseFloat(copyAmount);

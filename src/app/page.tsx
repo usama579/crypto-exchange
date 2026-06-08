@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
+import KycBanner from '@/components/KycBanner';
 import TradingView from '@/components/TradingView';
 import WalletComponent from '@/components/Wallet';
 import ReferralDashboard from '@/components/ReferralDashboard';
@@ -34,6 +35,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100">
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <KycBanner onCompleteProfile={() => setActiveTab('profile')} />
       <main className="max-w-7xl mx-auto">
         {renderActiveComponent()}
       </main>

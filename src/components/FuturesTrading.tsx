@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useKycGate } from '@/hooks/useKycGate';
 import { useCryptoStore } from '@/store/cryptoStore';
 import { cryptoWebSocket } from '@/lib/websocket';
 import { fetchCryptoData } from '@/lib/cryptoApi';
@@ -20,6 +21,7 @@ interface FuturesPosition {
 
 export default function FuturesTrading() {
   const { data: session } = useSession();
+  const { blockIfIncomplete } = useKycGate();
   const { prices, setPrices, setIsConnected, isConnected } = useCryptoStore();
 
   const [selectedCrypto, setSelectedCrypto] = useState<any>(null);
@@ -65,6 +67,7 @@ export default function FuturesTrading() {
   }, [setPrices, setIsConnected]);
 
   const handleTrade = async () => {
+    if (blockIfIncomplete()) return;
     if (!selectedCrypto || !margin || !session?.user?.id) return;
 
     try {

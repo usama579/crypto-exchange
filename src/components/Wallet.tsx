@@ -61,6 +61,7 @@ const CryptoIcon = ({ symbol, size = 32 }: CryptoIconProps) => {
 import WalletConnector from './WalletConnector';
 import { useCryptoStore } from '@/store/cryptoStore';
 import { fetchCryptoData } from '@/lib/cryptoApi';
+import { useKycGate } from '@/hooks/useKycGate';
 
 interface Asset {
   id: string;
@@ -69,8 +70,29 @@ interface Asset {
   balance: string;
 }
 
+interface DepositNetwork {
+  id: string;
+  symbol: string;        // symbol passed to the QR generator
+  coin: string;          // human label for the coin
+  network: string;       // network label shown as the badge (e.g. BEP20)
+  address: string;
+}
+
+// Static list of supported deposit networks. This is intentionally independent
+// of the user's existing wallet rows so every network is always selectable.
+const DEPOSIT_NETWORKS: DepositNetwork[] = [
+  { id: 'btc', symbol: 'BTC', coin: 'Bitcoin', network: 'BTC', address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
+  { id: 'erc20', symbol: 'ETH', coin: 'Ethereum / USDT', network: 'ERC20', address: '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97' },
+  { id: 'bep20', symbol: 'BNB', coin: 'BNB / USDT', network: 'BEP20', address: '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97' },
+  { id: 'trc20', symbol: 'TRX', coin: 'Tron / USDT', network: 'TRC20', address: 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr' },
+  { id: 'sol', symbol: 'SOL', coin: 'Solana', network: 'SOL', address: 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn' },
+  { id: 'pol', symbol: 'POL', coin: 'Polygon', network: 'POL', address: '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97' },
+  { id: 'ton', symbol: 'TON', coin: 'Toncoin', network: 'TON', address: 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq' },
+];
+
 export default function WalletComponent() {
   const { data: session, status } = useSession();
+  const { blockIfIncomplete } = useKycGate();
   const { prices, setPrices } = useCryptoStore();
   const [showBalance, setShowBalance] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -78,6 +100,7 @@ export default function WalletComponent() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedAssetForDeposit, setSelectedAssetForDeposit] = useState<Asset | null>(null);
+  const [selectedDepositNetwork, setSelectedDepositNetwork] = useState<DepositNetwork>(DEPOSIT_NETWORKS[0]);
   const [selectedAssetForWithdrawal, setSelectedAssetForWithdrawal] = useState<Asset | null>(null);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
@@ -205,14 +228,14 @@ export default function WalletComponent() {
         </div>
         <div className="flex space-x-3">
           <button
-            onClick={() => setShowDepositModal(true)}
+            onClick={() => { if (blockIfIncomplete()) return; setShowDepositModal(true); }}
             className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
           >
             <Plus size={16} className="mr-2" />
             Deposit
           </button>
           <button
-            onClick={() => setShowWithdrawalModal(true)}
+            onClick={() => { if (blockIfIncomplete()) return; setShowWithdrawalModal(true); }}
             className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
           >
             <Send size={16} className="mr-2" />
@@ -334,7 +357,7 @@ export default function WalletComponent() {
                 <div className="text-lg font-medium mb-2">No assets yet</div>
                 <div className="text-sm">Start by depositing some cryptocurrency to your wallet</div>
                 <button
-                  onClick={() => setShowDepositModal(true)}
+                  onClick={() => { if (blockIfIncomplete()) return; setShowDepositModal(true); }}
                   className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                 >
                   Make your first deposit
@@ -394,7 +417,7 @@ export default function WalletComponent() {
                 <div className="text-center text-gray-500 py-8">
                   <div className="text-sm">No assets to display</div>
                   <button
-                    onClick={() => setShowDepositModal(true)}
+                    onClick={() => { if (blockIfIncomplete()) return; setShowDepositModal(true); }}
                     className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
                     Add your first asset
@@ -440,7 +463,7 @@ export default function WalletComponent() {
             <div className="text-sm text-gray-600 mb-4">Your transaction history will appear here once you start trading</div>
             <div className="flex space-x-3 justify-center">
               <button
-                onClick={() => setShowDepositModal(true)}
+                onClick={() => { if (blockIfIncomplete()) return; setShowDepositModal(true); }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 Make a Deposit
@@ -481,23 +504,23 @@ export default function WalletComponent() {
 
             {/* Content */}
             <div className="px-6 py-6">
-              {/* Crypto Selection */}
+              {/* Network Selection */}
               <div className="mb-8">
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Select Cryptocurrency
+                  Select Network
                 </label>
                 <div className="relative">
                   <select
+                    value={selectedDepositNetwork.id}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 appearance-none cursor-pointer transition-all"
                     onChange={(e) => {
-                      const asset = assets.find(a => a.symbol === e.target.value);
-                      setSelectedAssetForDeposit(asset || null);
+                      const network = DEPOSIT_NETWORKS.find(n => n.id === e.target.value);
+                      if (network) setSelectedDepositNetwork(network);
                     }}
                   >
-                    <option value="" className="text-gray-500">Bitcoin (BTC)</option>
-                    {assets.map((asset) => (
-                      <option key={asset.symbol} value={asset.symbol} className="text-gray-900">
-                        {asset.name} ({asset.symbol})
+                    {DEPOSIT_NETWORKS.map((network) => (
+                      <option key={network.id} value={network.id} className="text-gray-900">
+                        {network.coin} ({network.network})
                       </option>
                     ))}
                   </select>
@@ -509,8 +532,8 @@ export default function WalletComponent() {
                 </div>
               </div>
 
-              {/* Default BTC or Selected Asset */}
-              {(selectedAssetForDeposit || !selectedAssetForDeposit) && (
+              {/* Deposit details for the selected network */}
+              {(
                 <div className="space-y-6">
                   {/* Deposit Address Section */}
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-5">
@@ -522,40 +545,19 @@ export default function WalletComponent() {
                         <span className="font-semibold text-gray-900">Deposit Address</span>
                       </div>
                       <div className="flex items-center text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                        {selectedAssetForDeposit?.symbol || 'BTC'} Network
+                        {selectedDepositNetwork.network} Network
                       </div>
                     </div>
 
                     <div className="bg-white border border-blue-200 rounded-lg p-4 mb-4">
                       <div className="font-mono text-sm text-gray-800 break-all leading-relaxed">
-                        {selectedAssetForDeposit?.symbol === 'BTC' && '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
-                        {selectedAssetForDeposit?.symbol === 'ETH' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
-                        {selectedAssetForDeposit?.symbol === 'BNB' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
-                        {selectedAssetForDeposit?.symbol === 'USDT' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
-                        {selectedAssetForDeposit?.symbol === 'SOL' && 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn'}
-                        {selectedAssetForDeposit?.symbol === 'POL' && '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97'}
-                        {selectedAssetForDeposit?.symbol === 'TON' && 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq'}
-                        {selectedAssetForDeposit?.symbol === 'TRX' && 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr'}
-                        {!selectedAssetForDeposit && '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+                        {selectedDepositNetwork.address}
                       </div>
                     </div>
 
                     <button
                       onClick={() => {
-                        const getDepositAddress = (symbol?: string) => {
-                          const addresses = {
-                            'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-                            'ETH': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
-                            'BNB': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
-                            'USDT': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
-                            'SOL': 'J6aeP19UrwvWFDGorWADYqnA2BNw97fp4DT3KCaGEksn',
-                            'POL': '0xad12d71e5a1323c9dfd1eddf911efbc86f40ab97',
-                            'TON': 'UQCBIV4LfX01corjV1n3ubL2rwWKnUZxAR5cchsSvARhCUyq',
-                            'TRX': 'TYDyM9dgAdYXYGfBgezCzxHpLYaPdFYtxr'
-                          };
-                          return addresses[symbol as keyof typeof addresses] || '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-                        };
-                        const addressToCopy = getDepositAddress(selectedAssetForDeposit?.symbol);
+                        const addressToCopy = selectedDepositNetwork.address;
 
                         navigator.clipboard.writeText(addressToCopy);
                         const notification = document.createElement('div');
@@ -587,7 +589,12 @@ export default function WalletComponent() {
 
                     <button
                       onClick={() => {
-                        setSelectedAssetForDeposit(selectedAssetForDeposit || { id: 'btc-default', symbol: 'BTC', name: 'Bitcoin', balance: '0' });
+                        setSelectedAssetForDeposit({
+                          id: selectedDepositNetwork.id,
+                          symbol: selectedDepositNetwork.symbol,
+                          name: `${selectedDepositNetwork.coin} (${selectedDepositNetwork.network})`,
+                          balance: '0',
+                        });
                         setShowQRModal(true);
                         setShowDepositModal(false);
                       }}
@@ -609,11 +616,11 @@ export default function WalletComponent() {
                         <ul className="space-y-2 text-sm text-amber-800">
                           <li className="flex items-start">
                             <div className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                            <span>Only send <strong>{selectedAssetForDeposit?.symbol || 'BTC'}</strong> to this address</span>
+                            <span>Only send assets on the <strong>{selectedDepositNetwork.network}</strong> network to this address</span>
                           </li>
                           <li className="flex items-start">
                             <div className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                            <span>Minimum deposit: <strong>0.001 {selectedAssetForDeposit?.symbol || 'BTC'}</strong></span>
+                            <span>Sending the wrong network or coin may result in permanent loss of funds</span>
                           </li>
                           <li className="flex items-start">
                             <div className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
